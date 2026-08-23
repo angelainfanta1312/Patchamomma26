@@ -1,0 +1,63 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Compiled Python files
+*.py[cod]
+
+# Cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+gdist/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Large datasets
+data/
+datasets/
+
+# Temporary files
+tmp/
+temp/
