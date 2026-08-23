@@ -4,11 +4,11 @@ from processor.bigquery_reader import BigQueryReader
 def main():
     reader = BigQueryReader()
 
-    incident = reader.get_incident("INC-001")
+    incident = reader.get_incident("INC-003")
 
     print("\n=== INCIDENT ===")
     print("Incident ID:", incident["incident_id"])
-    print("Correlation ID:", incident["correlation_id"])
+    print("corelation ID:", incident["corelation_id"])
     print("Evidence count:", incident["evidence_count"])
 
     print("\n=== TIMELINE ===")

@@ -5,7 +5,7 @@ from typing import Any
 @dataclass
 class IncidentInvestigationInput:
     incident_id: str
-    correlation_id: str
+    corelation_id: str
     evidence_count: int
     timeline: list[dict[str, Any]]
     missing_evidence: list[dict[str, Any]]

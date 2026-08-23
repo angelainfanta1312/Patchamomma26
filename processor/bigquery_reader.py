@@ -11,7 +11,7 @@ class BigQueryReader:
         query = f"""
             SELECT
                 incident_id,
-                correlation_id,
+                corelation_id,
                 evidence_count,
                 timeline,
                 missing_evidence,
@@ -44,7 +44,7 @@ class BigQueryReader:
 
         return {
             "incident_id": row["incident_id"],
-            "correlation_id": row["correlation_id"],
+            "corelation_id": row["corelation_id"],
             "evidence_count": row["evidence_count"],
             "timeline": [dict(item) for item in row["timeline"]],
             "missing_evidence": [
