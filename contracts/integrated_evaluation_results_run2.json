@@ -1,0 +1,790 @@
+{
+  "INC-001": {
+    "input": {
+      "incident_id": "INC-001",
+      "corelation_id": "CORR-001",
+      "evidence_count": 6,
+      "timeline": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-17T09:41:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "actor": "user",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "User requested an account update.",
+          "seconds_since_previous_event": null
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-17T09:41:02+00:00",
+          "source": "AGENT",
+          "event_type": "DOCUMENT_RETRIEVED",
+          "actor": "agent",
+          "action": "RETRIEVE_DOCUMENT",
+          "status": "SUCCESS",
+          "details": "Agent retrieved supplier_update.txt as supporting information.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-17T09:41:03+00:00",
+          "source": "AGENT",
+          "event_type": "INSTRUCTION_DETECTED",
+          "actor": "agent",
+          "action": "PROCESS_DOCUMENT",
+          "status": "WARNING",
+          "details": "Retrieved document contained an instruction to perform an account update that was not present in the original user request.",
+          "seconds_since_previous_event": 1
+        },
+        {
+          "sequence_number": 4,
+          "timestamp": "2026-08-17T09:41:05+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued an UPDATE_ACCOUNT tool call.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 5,
+          "timestamp": "2026-08-17T09:41:06+00:00",
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE",
+          "actor": "account_tool",
+          "action": "UPDATE_ACCOUNT",
+          "status": "SUCCESS",
+          "details": "Account update tool reported SUCCESS.",
+          "seconds_since_previous_event": 1
+        },
+        {
+          "sequence_number": 6,
+          "timestamp": "2026-08-17T09:41:09+00:00",
+          "source": "SYSTEM_STATE",
+          "event_type": "STATE_CHECK",
+          "actor": "account_database",
+          "action": "CHECK_ACCOUNT",
+          "status": "UNCHANGED",
+          "details": "Authoritative account state shows no change after the reported tool success.",
+          "seconds_since_previous_event": 3
+        }
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "conflicts": [
+        {
+          "conflict_type": "TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+          "tool_timestamp": "2026-08-17T09:41:06+00:00",
+          "system_timestamp": "2026-08-17T09:41:09+00:00",
+          "tool_status": "SUCCESS",
+          "system_status": "UNCHANGED",
+          "tool_evidence": "Account update tool reported SUCCESS.",
+          "system_evidence": "Authoritative account state shows no change after the reported tool success."
+        }
+      ]
+    },
+    "investigation": {
+      "incident_id": "INC-001",
+      "confirmed_facts": [
+        "At 2026-08-17T09:41:00+00:00, the user submitted a request to update an account (Sequence 1).",
+        "At 2026-08-17T09:41:02+00:00, the agent retrieved 'supplier_update.txt' as supporting information (Sequence 2).",
+        "At 2026-08-17T09:41:03+00:00, the agent detected an instruction in 'supplier_update.txt' to perform an account update that was not present in the user's original request (Sequence 3).",
+        "At 2026-08-17T09:41:05+00:00, the agent issued an UPDATE_ACCOUNT tool call (Sequence 4).",
+        "At 2026-08-17T09:41:06+00:00, the account_tool returned a TOOL_RESPONSE status of SUCCESS (Sequence 5).",
+        "At 2026-08-17T09:41:09+00:00, the authoritative account_database state check indicated that system state remained UNCHANGED (Sequence 6)."
+      ],
+      "conflicts": [
+        {
+          "conflict_type": "TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+          "tool_timestamp": "2026-08-17T09:41:06+00:00",
+          "system_timestamp": "2026-08-17T09:41:09+00:00",
+          "description": "The account tool reported status SUCCESS for the UPDATE_ACCOUNT action, but the subsequent authoritative database check showed the account state was UNCHANGED. Therefore, it cannot be concluded that the update was successfully performed."
+        }
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "possible_explanations": [
+        "Hypothesis: The account update tool executed in a dry-run/no-op mode or targeted a different environment/record, resulting in a SUCCESS status response without altering the authoritative account database.",
+        "Hypothesis: The tool call failed silently or faced a downstream database commit/rollback error after acknowledging SUCCESS to the agent.",
+        "Hypothesis: The instruction detected in supplier_update.txt caused the agent to format the update tool call parameters in a way that produced no state change in the target account database."
+      ],
+      "recommended_next_checks": [
+        "Examine execution and debug logs for account_tool during the 2026-08-17T09:41:05 to 09:41:06 window to determine why SUCCESS was reported without database modification.",
+        "Review audit logs (when available) for the exact payload and parameters sent during Sequence 4's UPDATE_ACCOUNT call.",
+        "Inspect supplier_update.txt content to assess potential indirect prompt injection or unvetted instructions.",
+        "Check transaction history and read/write consistency or latency in account_database around 2026-08-17T09:41:09."
+      ],
+      "uncertainty": "It cannot be established from the available evidence whether the intended account update was applied elsewhere, why the tool reported SUCCESS while the database remained UNCHANGED, or whether the instruction within supplier_update.txt constituted a security threat or malicious prompt injection.",
+      "evidence_references": [
+        "Sequence 1: USER UPDATE_ACCOUNT request (timestamp: 2026-08-17T09:41:00+00:00)",
+        "Sequence 2: AGENT RETRIEVE_DOCUMENT supplier_update.txt (timestamp: 2026-08-17T09:41:02+00:00)",
+        "Sequence 3: AGENT INSTRUCTION_DETECTED warning (timestamp: 2026-08-17T09:41:03+00:00)",
+        "Sequence 4: AGENT TOOL_CALL UPDATE_ACCOUNT (timestamp: 2026-08-17T09:41:05+00:00)",
+        "Sequence 5: TOOL TOOL_RESPONSE SUCCESS (timestamp: 2026-08-17T09:41:06+00:00)",
+        "Sequence 6: SYSTEM_STATE STATE_CHECK UNCHANGED (timestamp: 2026-08-17T09:41:09+00:00)"
+      ]
+    }
+  },
+  "INC-002": {
+    "input": {
+      "incident_id": "INC-002",
+      "corelation_id": "CORR-002",
+      "evidence_count": 6,
+      "timeline": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-17T10:15:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "actor": "user",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "User requested an account update.",
+          "seconds_since_previous_event": null
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-17T10:15:02+00:00",
+          "source": "AGENT",
+          "event_type": "DOCUMENT_RETRIEVED",
+          "actor": "agent",
+          "action": "RETRIEVE_DOCUMENT",
+          "status": "SUCCESS",
+          "details": "Agent retrieved the account_update_policy document.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-17T10:15:04+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 4,
+          "timestamp": "2026-08-17T10:15:05+00:00",
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE",
+          "actor": "account_tool",
+          "action": "UPDATE_ACCOUNT",
+          "status": "SUCCESS",
+          "details": "Account update tool reported successful completion.",
+          "seconds_since_previous_event": 1
+        },
+        {
+          "sequence_number": 5,
+          "timestamp": "2026-08-17T10:15:07+00:00",
+          "source": "SYSTEM_STATE",
+          "event_type": "STATE_CHECK",
+          "actor": "account_database",
+          "action": "CHECK_ACCOUNT",
+          "status": "UPDATED",
+          "details": "Authoritative account database reflects the requested account update.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 6,
+          "timestamp": "2026-08-17T10:15:08+00:00",
+          "source": "AUDIT",
+          "event_type": "AUDIT_EVENT",
+          "actor": "audit_service",
+          "action": "RECORD_UPDATE",
+          "status": "SUCCESS",
+          "details": "Audit record confirms that the account update was completed.",
+          "seconds_since_previous_event": 1
+        }
+      ],
+      "missing_evidence": [],
+      "conflicts": []
+    },
+    "investigation": {
+      "incident_id": "INC-002",
+      "confirmed_facts": [
+        "At 2026-08-17T10:15:00+00:00, the user requested an account update.",
+        "At 2026-08-17T10:15:02+00:00, the agent retrieved the 'account_update_policy' document with status SUCCESS.",
+        "At 2026-08-17T10:15:04+00:00, the agent issued an UPDATE_ACCOUNT request via the account tool.",
+        "At 2026-08-17T10:15:05+00:00, the account update tool returned a status of SUCCESS.",
+        "At 2026-08-17T10:15:07+00:00, the authoritative account database check showed a status of UPDATED.",
+        "At 2026-08-17T10:15:08+00:00, the audit service recorded the account update with status SUCCESS."
+      ],
+      "conflicts": [],
+      "missing_evidence": [],
+      "possible_explanations": [
+        "Hypothesis: The account update request followed the standard automated workflow end-to-end without errors, successfully verifying policy, invoking the tool, updating state, and writing audit logs."
+      ],
+      "recommended_next_checks": [
+        "Check user interface logs or communication service logs to verify whether a final response or notification was delivered to the user.",
+        "Check detailed database record fields to verify that the specific account fields updated match the user's intended request parameters."
+      ],
+      "uncertainty": "It cannot be established from the evidence which specific account parameters or fields were modified, nor whether the final completion status was communicated back to the user.",
+      "evidence_references": [
+        "Sequence 1 (2026-08-17T10:15:00+00:00): USER USER_REQUEST UPDATE_ACCOUNT",
+        "Sequence 2 (2026-08-17T10:15:02+00:00): AGENT DOCUMENT_RETRIEVED account_update_policy",
+        "Sequence 3 (2026-08-17T10:15:04+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT",
+        "Sequence 4 (2026-08-17T10:15:05+00:00): TOOL TOOL_RESPONSE SUCCESS",
+        "Sequence 5 (2026-08-17T10:15:07+00:00): SYSTEM_STATE STATE_CHECK UPDATED",
+        "Sequence 6 (2026-08-17T10:15:08+00:00): AUDIT AUDIT_EVENT SUCCESS"
+      ]
+    }
+  },
+  "INC-003": {
+    "input": {
+      "incident_id": "INC-003",
+      "corelation_id": "CORR-003",
+      "evidence_count": 5,
+      "timeline": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-17T11:30:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "actor": "user",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "User requested an account update.",
+          "seconds_since_previous_event": null
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-17T11:30:02+00:00",
+          "source": "AGENT",
+          "event_type": "DOCUMENT_RETRIEVED",
+          "actor": "agent",
+          "action": "RETRIEVE_DOCUMENT",
+          "status": "SUCCESS",
+          "details": "Agent retrieved the account_update_policy document.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-17T11:30:04+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 4,
+          "timestamp": "2026-08-17T11:30:05+00:00",
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE",
+          "actor": "account_tool",
+          "action": "UPDATE_ACCOUNT",
+          "status": "SUCCESS",
+          "details": "Account update tool reported successful completion.",
+          "seconds_since_previous_event": 1
+        },
+        {
+          "sequence_number": 5,
+          "timestamp": "2026-08-17T11:30:07+00:00",
+          "source": "SYSTEM_STATE",
+          "event_type": "STATE_CHECK",
+          "actor": "account_database",
+          "action": "CHECK_ACCOUNT",
+          "status": "UPDATED",
+          "details": "Authoritative account database reflects the requested account update.",
+          "seconds_since_previous_event": 2
+        }
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "conflicts": []
+    },
+    "investigation": {
+      "incident_id": "INC-003",
+      "confirmed_facts": [
+        "At 2026-08-17T11:30:00+00:00, the user issued a request to update their account.",
+        "At 2026-08-17T11:30:02+00:00, the agent successfully retrieved the account_update_policy document.",
+        "At 2026-08-17T11:30:04+00:00, the agent issued an UPDATE_ACCOUNT request to the account tool.",
+        "At 2026-08-17T11:30:05+00:00, the account update tool reported successful completion.",
+        "At 2026-08-17T11:30:07+00:00, a state check on the authoritative account database confirmed that the account reflects the requested update."
+      ],
+      "conflicts": [],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "possible_explanations": [
+        "Hypothesis: The account update request followed the standard workflow correctly, retrieving policy guidelines, executing the update tool, and updating the database successfully."
+      ],
+      "recommended_next_checks": [
+        "Obtain and inspect the AUDIT log source once available to verify specific field-level changes and administrative parameters associated with the update."
+      ],
+      "uncertainty": "While tool execution and database state both indicate successful completion, the exact field-level payload and audit-trail context cannot be verified due to missing AUDIT evidence.",
+      "evidence_references": [
+        {
+          "correlation_id": "CORR-003",
+          "sequence_number": 1,
+          "source": "USER",
+          "event_type": "USER_REQUEST"
+        },
+        {
+          "correlation_id": "CORR-003",
+          "sequence_number": 2,
+          "source": "AGENT",
+          "event_type": "DOCUMENT_RETRIEVED"
+        },
+        {
+          "correlation_id": "CORR-003",
+          "sequence_number": 3,
+          "source": "AGENT",
+          "event_type": "TOOL_CALL"
+        },
+        {
+          "correlation_id": "CORR-003",
+          "sequence_number": 4,
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE"
+        },
+        {
+          "correlation_id": "CORR-003",
+          "sequence_number": 5,
+          "source": "SYSTEM_STATE",
+          "event_type": "STATE_CHECK"
+        }
+      ]
+    }
+  },
+  "INC-004": {
+    "input": {
+      "incident_id": "INC-004",
+      "corelation_id": "CORR-004",
+      "evidence_count": 4,
+      "timeline": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-18T09:00:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "actor": "user",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "User requested an account update.",
+          "seconds_since_previous_event": null
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-18T09:00:02+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-18T09:00:04+00:00",
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE",
+          "actor": "account_tool",
+          "action": "UPDATE_ACCOUNT",
+          "status": "FAILED",
+          "details": "Account update tool reported that the operation failed.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 4,
+          "timestamp": "2026-08-18T09:00:07+00:00",
+          "source": "SYSTEM_STATE",
+          "event_type": "STATE_CHECK",
+          "actor": "account_database",
+          "action": "CHECK_ACCOUNT",
+          "status": "UPDATED",
+          "details": "Authoritative account database shows that the requested account update was applied.",
+          "seconds_since_previous_event": 3
+        }
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "conflicts": []
+    },
+    "investigation": {
+      "incident_id": "INC-004",
+      "confirmed_facts": [
+        "At 2026-08-18T09:00:00+00:00, the user issued a request to update the account (Sequence 1).",
+        "At 2026-08-18T09:00:02+00:00, the agent initiated an UPDATE_ACCOUNT tool call (Sequence 2).",
+        "At 2026-08-18T09:00:04+00:00, the account_tool returned a FAILED status response (Sequence 3).",
+        "At 2026-08-18T09:00:07+00:00, the authoritative account database indicated a status of UPDATED for the requested account update (Sequence 4)."
+      ],
+      "conflicts": [
+        "Conflict between account_tool response and actual database state: account_tool reported FAILED (Sequence 3), but account_database state check reported UPDATED (Sequence 4)."
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "possible_explanations": [
+        "Hypothesis: The account_tool successfully committed the update to the account_database but encountered an error (such as a response timeout or network failure) before reporting success back to the agent.",
+        "Hypothesis: The account_tool call failed before completing, but an automated retry, background worker, or distinct transaction completed the account update shortly afterward.",
+        "Hypothesis: A concurrent process or alternate system component executed the account update independently of the tool's reported failure."
+      ],
+      "recommended_next_checks": [
+        "Examine AUDIT logs (once available) to identify the exact actor, process, and timestamp associated with the database modification.",
+        "Inspect application logs for account_tool at 2026-08-18T09:00:04+00:00 to determine the exact root cause of the FAILED status response.",
+        "Query account_database transaction logs using correlation ID CORR-004 to confirm transaction commit timestamps and source session IDs."
+      ],
+      "uncertainty": "It cannot be definitively determined from the available evidence whether the account_tool committed the change prior to failing or if a separate process applied the update, due to missing AUDIT logs.",
+      "evidence_references": [
+        "Sequence 1 (2026-08-18T09:00:00+00:00): USER USER_REQUEST UPDATE_ACCOUNT REQUESTED",
+        "Sequence 2 (2026-08-18T09:00:02+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT REQUESTED",
+        "Sequence 3 (2026-08-18T09:00:04+00:00): TOOL TOOL_RESPONSE UPDATE_ACCOUNT FAILED",
+        "Sequence 4 (2026-08-18T09:00:07+00:00): SYSTEM_STATE STATE_CHECK CHECK_ACCOUNT UPDATED"
+      ]
+    }
+  },
+  "INC-005": {
+    "input": {
+      "incident_id": "INC-005",
+      "corelation_id": "CORR-005",
+      "evidence_count": 5,
+      "timeline": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-18T10:15:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "actor": "user",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "User requested an account update.",
+          "seconds_since_previous_event": null
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-18T10:15:03+00:00",
+          "source": "AGENT",
+          "event_type": "DOCUMENT_RETRIEVED",
+          "actor": "agent",
+          "action": "RETRIEVE_DOCUMENT",
+          "status": "SUCCESS",
+          "details": "Agent retrieved account_update_policy.txt as supporting information.",
+          "seconds_since_previous_event": 3
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-18T10:15:05+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued an UPDATE_ACCOUNT request.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 4,
+          "timestamp": "2026-08-18T10:15:07+00:00",
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE",
+          "actor": "account_tool",
+          "action": "UPDATE_ACCOUNT",
+          "status": "SUCCESS",
+          "details": "Account update tool reported successful completion.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 5,
+          "timestamp": "2026-08-18T10:15:09+00:00",
+          "source": "SYSTEM_STATE",
+          "event_type": "STATE_CHECK",
+          "actor": "account_database",
+          "action": "CHECK_ACCOUNT",
+          "status": "UPDATED",
+          "details": "Authoritative account database reflects the requested account update.",
+          "seconds_since_previous_event": 2
+        }
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "conflicts": []
+    },
+    "investigation": {
+      "incident_id": "INC-005",
+      "confirmed_facts": [
+        "At 2026-08-18T10:15:00+00:00, the user submitted an UPDATE_ACCOUNT request (Sequence 1).",
+        "At 2026-08-18T10:15:03+00:00, the agent successfully retrieved account_update_policy.txt as supporting information (Sequence 2).",
+        "At 2026-08-18T10:15:05+00:00, the agent issued an UPDATE_ACCOUNT tool call (Sequence 3).",
+        "At 2026-08-18T10:15:07+00:00, the account_tool returned SUCCESS for the UPDATE_ACCOUNT action (Sequence 4).",
+        "At 2026-08-18T10:15:09+00:00, account_database confirmed via a state check that the database reflects the requested account update with status UPDATED (Sequence 5)."
+      ],
+      "conflicts": [],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "possible_explanations": [
+        "Hypothesis: The account update executed cleanly and as expected, supported by matching success statuses from both the tool response and the authoritative system state check.",
+        "Hypothesis: Audit log collection failed or was delayed during execution, resulting in missing AUDIT evidence despite successful completion of the workflow."
+      ],
+      "recommended_next_checks": [
+        "Inspect system and security audit logging mechanisms to determine why AUDIT logs were not captured for correlation ID CORR-005.",
+        "Verify the specific account fields modified in account_database to ensure changes comply with account_update_policy.txt."
+      ],
+      "uncertainty": "Because AUDIT evidence is missing, specific account field changes, caller authorization details, and audit trail validation cannot be established from the available evidence.",
+      "evidence_references": [
+        "Timeline Sequence 1: USER UPDATE_ACCOUNT request at 2026-08-18T10:15:00+00:00",
+        "Timeline Sequence 2: AGENT RETRIEVE_DOCUMENT for account_update_policy.txt at 2026-08-18T10:15:03+00:00",
+        "Timeline Sequence 3: AGENT TOOL_CALL for UPDATE_ACCOUNT at 2026-08-18T10:15:05+00:00",
+        "Timeline Sequence 4: TOOL TOOL_RESPONSE (status: SUCCESS) at 2026-08-18T10:15:07+00:00",
+        "Timeline Sequence 5: SYSTEM_STATE STATE_CHECK (status: UPDATED) at 2026-08-18T10:15:09+00:00",
+        "Correlation ID: CORR-005"
+      ]
+    }
+  },
+  "INC-006": {
+    "input": {
+      "incident_id": "INC-006",
+      "corelation_id": "CORR-006",
+      "evidence_count": 6,
+      "timeline": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-18T11:30:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "actor": "user",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "User requested an account update.",
+          "seconds_since_previous_event": null
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-18T11:30:02+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued an UPDATE_ACCOUNT request.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-18T11:30:03+00:00",
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE",
+          "actor": "account_tool",
+          "action": "UPDATE_ACCOUNT",
+          "status": "SUCCESS",
+          "details": "Account update tool reported successful completion.",
+          "seconds_since_previous_event": 1
+        },
+        {
+          "sequence_number": 4,
+          "timestamp": "2026-08-18T11:30:05+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued a second UPDATE_ACCOUNT request with the same action, suggesting a possible replay.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 5,
+          "timestamp": "2026-08-18T11:30:06+00:00",
+          "source": "TOOL",
+          "event_type": "TOOL_RESPONSE",
+          "actor": "account_tool",
+          "action": "UPDATE_ACCOUNT",
+          "status": "SUCCESS",
+          "details": "Account update tool again reported successful completion.",
+          "seconds_since_previous_event": 1
+        },
+        {
+          "sequence_number": 6,
+          "timestamp": "2026-08-18T11:30:08+00:00",
+          "source": "SYSTEM_STATE",
+          "event_type": "STATE_CHECK",
+          "actor": "account_database",
+          "action": "CHECK_ACCOUNT",
+          "status": "UPDATED",
+          "details": "Authoritative account database reflects the requested account update.",
+          "seconds_since_previous_event": 2
+        }
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "conflicts": []
+    },
+    "investigation": {
+      "incident_id": "INC-006",
+      "confirmed_facts": [
+        "At 2026-08-18T11:30:00+00:00, a user requested an account update (Sequence 1).",
+        "At 2026-08-18T11:30:02+00:00, the agent issued an UPDATE_ACCOUNT tool call (Sequence 2).",
+        "At 2026-08-18T11:30:03+00:00, account_tool reported SUCCESS for the first UPDATE_ACCOUNT call (Sequence 3).",
+        "At 2026-08-18T11:30:05+00:00, the agent issued a second UPDATE_ACCOUNT tool call for the same action (Sequence 4).",
+        "At 2026-08-18T11:30:06+00:00, account_tool reported SUCCESS for the second UPDATE_ACCOUNT call (Sequence 5).",
+        "At 2026-08-18T11:30:08+00:00, account_database confirmed the system state was UPDATED (Sequence 6)."
+      ],
+      "conflicts": [],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        }
+      ],
+      "possible_explanations": [
+        "Hypothesis: The agent may have inadvertently replayed or retried the UPDATE_ACCOUNT request due to a race condition or missing acknowledgment logic after Sequence 3.",
+        "Hypothesis: The tool execution was idempotent, resulting in successful responses for both calls (Sequence 3 and Sequence 5) while leaving the final account state UPDATED (Sequence 6)."
+      ],
+      "recommended_next_checks": [
+        "Review audit logs from the AUDIT source to inspect payload details, transaction IDs, and database write operations for both tool calls.",
+        "Inspect the agent's logic and retry policy to determine why a second UPDATE_ACCOUNT call was issued after receiving a successful response.",
+        "Verify whether the account_tool and account_database implement idempotency controls for duplicate account update requests."
+      ],
+      "uncertainty": "It cannot be established from the available evidence whether the second tool call (Sequence 4) modified the system state a second time or was handled idempotently, nor can the exact cause of the duplicate agent call be confirmed without audit logs.",
+      "evidence_references": [
+        "Sequence 1 (2026-08-18T11:30:00+00:00): USER USER_REQUEST UPDATE_ACCOUNT - REQUESTED",
+        "Sequence 2 (2026-08-18T11:30:02+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT - REQUESTED",
+        "Sequence 3 (2026-08-18T11:30:03+00:00): TOOL TOOL_RESPONSE UPDATE_ACCOUNT - SUCCESS",
+        "Sequence 4 (2026-08-18T11:30:05+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT - REQUESTED",
+        "Sequence 5 (2026-08-18T11:30:06+00:00): TOOL TOOL_RESPONSE UPDATE_ACCOUNT - SUCCESS",
+        "Sequence 6 (2026-08-18T11:30:08+00:00): SYSTEM_STATE STATE_CHECK CHECK_ACCOUNT - UPDATED"
+      ]
+    }
+  },
+  "INC-007": {
+    "input": {
+      "incident_id": "INC-007",
+      "corelation_id": "CORR-007",
+      "evidence_count": 3,
+      "timeline": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-18T13:00:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "actor": "user",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "User requested an account update.",
+          "seconds_since_previous_event": null
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-18T13:00:02+00:00",
+          "source": "AGENT",
+          "event_type": "DOCUMENT_RETRIEVED",
+          "actor": "agent",
+          "action": "RETRIEVE_DOCUMENT",
+          "status": "SUCCESS",
+          "details": "Agent retrieved account_update_policy.txt as supporting information.",
+          "seconds_since_previous_event": 2
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-18T13:00:04+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "actor": "agent",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED",
+          "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+          "seconds_since_previous_event": 2
+        }
+      ],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        },
+        {
+          "missing_evidence_source": "SYSTEM_STATE"
+        },
+        {
+          "missing_evidence_source": "TOOL"
+        }
+      ],
+      "conflicts": []
+    },
+    "investigation": {
+      "incident_id": "INC-007",
+      "confirmed_facts": [
+        "At 2026-08-18T13:00:00+00:00, the user initiated an UPDATE_ACCOUNT request (Sequence 1).",
+        "At 2026-08-18T13:00:02+00:00, the agent successfully retrieved the supporting document 'account_update_policy.txt' (Sequence 2).",
+        "At 2026-08-18T13:00:04+00:00, the agent issued an UPDATE_ACCOUNT tool call request through the account tool (Sequence 3)."
+      ],
+      "conflicts": [],
+      "missing_evidence": [
+        {
+          "missing_evidence_source": "AUDIT"
+        },
+        {
+          "missing_evidence_source": "SYSTEM_STATE"
+        },
+        {
+          "missing_evidence_source": "TOOL"
+        }
+      ],
+      "possible_explanations": [
+        "Hypothesis: The account update tool call is still processing or pending a response from the account system.",
+        "Hypothesis: The tool call encountered an unrecorded backend error or timeout after the initial request was logged."
+      ],
+      "recommended_next_checks": [
+        "Check tool execution logs for the account tool to determine whether the UPDATE_ACCOUNT request completed, failed, or timed out.",
+        "Inspect target system state and database logs to verify if the requested account changes were applied.",
+        "Review system audit logs linked to correlation ID CORR-007 to establish the end-to-end outcome of the workflow."
+      ],
+      "uncertainty": "It cannot be determined from the available evidence whether the UPDATE_ACCOUNT request was successfully executed or whether any change was actually made to the system state.",
+      "evidence_references": [
+        {
+          "sequence_number": 1,
+          "timestamp": "2026-08-18T13:00:00+00:00",
+          "source": "USER",
+          "event_type": "USER_REQUEST",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED"
+        },
+        {
+          "sequence_number": 2,
+          "timestamp": "2026-08-18T13:00:02+00:00",
+          "source": "AGENT",
+          "event_type": "DOCUMENT_RETRIEVED",
+          "action": "RETRIEVE_DOCUMENT",
+          "status": "SUCCESS"
+        },
+        {
+          "sequence_number": 3,
+          "timestamp": "2026-08-18T13:00:04+00:00",
+          "source": "AGENT",
+          "event_type": "TOOL_CALL",
+          "action": "UPDATE_ACCOUNT",
+          "status": "REQUESTED"
+        }
+      ]
+    }
+  }
+}
