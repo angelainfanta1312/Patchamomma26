@@ -2,12 +2,29 @@ from google.cloud import bigquery
 
 from processor.config import PROJECT_ID, DATASET_ID, INPUT_VIEW
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class BigQueryReader:
     def __init__(self):
         self.client = bigquery.Client(project=PROJECT_ID)
+    
+    def list_incidents(self) -> list[str]:
+        logger.info("Fetching incident IDs from BigQuery")
+        query = f"""
+            SELECT DISTINCT incident_id
+            FROM `{PROJECT_ID}.{DATASET_ID}.{INPUT_VIEW}`
+            WHERE incident_id IS NOT NULL
+            ORDER BY incident_id
+        """
 
+        results = self.client.query(query).result()
+        
+        return [row["incident_id"] for row in results]
+    
     def get_incident(self, incident_id: str) -> dict:
+        logger.info("Fetching incident evidence for %s", incident_id)
         query = f"""
             SELECT
                 incident_id,
@@ -41,7 +58,7 @@ class BigQueryReader:
             raise ValueError(f"Incident not found: {incident_id}")
 
         row = results[0]
-
+        logger.info("Retrieved incident %s from BigQuery", incident_id)
         return {
             "incident_id": row["incident_id"],
             "corelation_id": row["corelation_id"],

@@ -1,5 +1,8 @@
 from typing import Any
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class IncidentProcessor:
     """
@@ -8,6 +11,7 @@ class IncidentProcessor:
     """
 
     def process(self, incident: dict[str, Any]) -> dict[str, Any]:
+        logger.info("Processing Workstream A contract for %s",incident["incident_id"])
         """
         Normalize and validate a raw incident.
 
@@ -25,7 +29,7 @@ class IncidentProcessor:
         }
 
         self._validate(processed)
-
+        logger.info("Workstream A processing complete for %s", processed["incident_id"])
         return processed
 
     def _normalize_timeline(
