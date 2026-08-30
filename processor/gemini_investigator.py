@@ -2,7 +2,9 @@ import json
 from typing import Any
 
 from google import genai
+import logging
 
+logger = logging.getLogger(__name__)
 
 INVESTIGATION_PROMPT = """
 Analyze the incident investigation context provided below.
@@ -94,6 +96,10 @@ class GeminiInvestigator:
         Send the validated Workstream A contract to Gemini
         and return the structured investigation result.
         """
+        logger.info(
+            "Starting Gemini investigation for %s",
+            incident_context["incident_id"],
+        )
 
         context_json = json.dumps(
             incident_context,
@@ -111,7 +117,7 @@ class GeminiInvestigator:
             model=self.model,
             contents=prompt,
         )
-
+        logger.info("Gemini investigation completed for %s", incident_context["incident_id"])
         text = response.text.strip()
 
         # Remove accidental markdown fences if the model adds them.
