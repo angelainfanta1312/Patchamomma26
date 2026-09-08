@@ -8,27 +8,20 @@ logger = logging.getLogger(__name__)
 
 
 class V2EvidenceReader:
-    """
-    Combines independent evidence sources for V2 investigation.
-
-    BigQuery:
-        Agent/user execution evidence.
-
-    Spanner:
-        Authoritative business state.
-
-    This class is read-only.
-    """
-
-    def __init__(self):
-        self.bigquery = BigQueryReader()
-        self.spanner = SpannerReader()
+    def __init__(
+        self,
+        bigquery_reader=None,
+        spanner_reader=None,
+        alloydb_reader=None,
+        bigtable_reader=None,
+    ):
+        self.bigquery = bigquery_reader or BigQueryReader()
+        self.spanner = spanner_reader or SpannerReader()
+        self.alloydb = alloydb_reader
+        self.bigtable = bigtable_reader
 
     def inspect_incident(self, incident_id: str) -> dict:
-        logger.info(
-            "Collecting V2 evidence for %s",
-            incident_id,
-        )
+        logger.info("Collecting V2 evidence for %s", incident_id)
 
         agent_execution = self.bigquery.inspect_agent_execution(
             incident_id
@@ -40,11 +33,35 @@ class V2EvidenceReader:
             )
         )
 
+        if self.alloydb is None:
+            raise RuntimeError(
+                "AlloyDB reader has not been configured"
+            )
+
+        if self.bigtable is None:
+            raise RuntimeError(
+                "Bigtable reader has not been configured"
+            )
+
+        tool_execution = (
+            self.alloydb.inspect_tool_execution(
+                incident_id
+            )
+        )
+
+        runtime_telemetry = (
+            self.bigtable.inspect_runtime_telemetry(
+                incident_id
+            )
+        )
+
         evidence = {
             "incident_id": incident_id,
-            "corelation_id": agent_execution["correlation_id"],
+            "correlation_id": agent_execution["correlation_id"],
             "agent_execution": agent_execution,
+            "tool_execution": tool_execution,
             "authoritative_state": authoritative_state,
+            "runtime_telemetry": runtime_telemetry,
         }
 
         validate_v2_evidence_contract(evidence)
