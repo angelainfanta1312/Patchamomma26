@@ -2,6 +2,8 @@ import logging
 
 from processor.bigquery_reader import BigQueryReader
 from processor.spanner_reader import SpannerReader
+from processor.alloydb_reader import AlloyDBReader
+from processor.bigtable_reader import BigtableReader
 from processor.v2_contract import validate_v2_evidence_contract
 
 logger = logging.getLogger(__name__)
@@ -17,8 +19,8 @@ class V2EvidenceReader:
     ):
         self.bigquery = bigquery_reader or BigQueryReader()
         self.spanner = spanner_reader or SpannerReader()
-        self.alloydb = alloydb_reader
-        self.bigtable = bigtable_reader
+        self.alloydb = alloydb_reader or AlloyDBReader()
+        self.bigtable = bigtable_reader or BigtableReader()
 
     def inspect_incident(self, incident_id: str) -> dict:
         logger.info("Collecting V2 evidence for %s", incident_id)

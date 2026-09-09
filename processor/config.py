@@ -35,3 +35,13 @@ SPANNER_STATE_TABLE = os.getenv(
     "SPANNER_STATE_TABLE",
     "account_state"
 )
+
+BIGTABLE_INSTANCE_ID = os.getenv(
+    "BIGTABLE_INSTANCE_ID",
+    "patchamomma-bigtable"
+)
+
+BIGTABLE_TABLE_ID = os.getenv(
+    "BIGTABLE_TABLE_ID",
+    "runtime_telemetry"
+)
