@@ -30,6 +30,7 @@ class AlloyDBReader:
         )
 
         self.connector = Connector(credentials=credentials)
+        self.user = user
 
     def inspect_tool_execution(self, incident_id: str) -> dict[str, Any]:
         """
