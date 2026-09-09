@@ -1,6 +1,8 @@
 import json
 from typing import Any
 
+import google.auth
+from google.auth import impersonated_credentials
 from google.cloud.alloydbconnector import Connector
 from processor.config import PROJECT_ID
 
@@ -19,8 +21,15 @@ class AlloyDBReader:
     TABLE_NAME = "tool_execution"
 
     def __init__(self, user: str = "aiei-run@project-448c7b37-cc7c-4c20-9d9.iam"):
-        self.user = user
-        self.connector = Connector()
+        source_credentials, _ = google.auth.default()
+
+        credentials = impersonated_credentials.Credentials(
+            source_credentials=source_credentials,
+            target_principal="aiei-run@project-448c7b37-cc7c-4c20-9d9.iam.gserviceaccount.com",
+            target_scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+
+        self.connector = Connector(credentials=credentials)
 
     def inspect_tool_execution(self, incident_id: str) -> dict[str, Any]:
         """
