@@ -1,12 +1,79 @@
 import logging
 
+from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 logger = logging.getLogger(__name__)
 
 
+class InvestigationConflict(BaseModel):
+    type: str = Field(
+        description=(
+            "Stable conflict identifier, for example "
+            "TOOL_SUCCESS_VS_STATE_UNCHANGED."
+        )
+    )
+    description: str = Field(
+        description="Evidence-grounded description of the conflict."
+    )
+
+
+class MissingEvidence(BaseModel):
+    missing_evidence_source: str = Field(
+        description=(
+            "The evidence source or evidence item that is "
+            "missing or unavailable."
+        )
+    )
+    description: str = Field(
+        description=(
+            "Why this evidence is missing or unavailable and "
+            "why it matters to the investigation."
+        )
+    )
+
+
+class InvestigationOutput(BaseModel):
+    confirmed_facts: list[str] = Field(
+        description="Facts directly supported by the supplied evidence."
+    )
+    conflicts: list[InvestigationConflict] = Field(
+        description="Conflicts present in deterministic findings or evidence."
+    )
+    missing_evidence: list[MissingEvidence] = Field(
+        description="Evidence explicitly identified as missing or unavailable."
+    )
+    business_outcome: str = Field(
+        description=(
+            "Deterministic business outcome. Use UNCONFIRMED when "
+            "authoritative business state is unavailable."
+        )
+    )
+    possible_explanations: list[str] = Field(
+        description=(
+            "Evidence-consistent hypotheses only. Never present "
+            "a hypothesis as a confirmed cause."
+        )
+    )
+    recommended_next_checks: list[str] = Field(
+        description=(
+            "Evidence-grounded checks that address actual missing "
+            "evidence or unresolved conflicts."
+        )
+    )
+    uncertainty: str = Field(
+        description="What remains unknown and why."
+    )
+    evidence_references: list[str] = Field(
+        description=(
+            "References to the supplied evidence supporting major findings. "
+            "Do not invent references."
+        )
+    )
+
+
 INVESTIGATOR_INSTRUCTION = """
-You are Patchamomma, an AI incident investigator.
+You are I-ESPÍA, an AI incident investigator.
 
 You will receive a JSON-encoded investigation context as your task input.
 
@@ -87,37 +154,43 @@ Do not claim that a recommended check has already been performed.
 
 OUTPUT RULES:
 
-Return the investigation in exactly this structure:
+Return ONLY the structured investigation output.
 
-CONFIRMED FACTS
-- Only facts directly supported by supplied evidence.
+Do not return Markdown headings.
+Do not wrap the response in a code block.
+Do not add commentary outside the required fields.
 
-CONFLICTS
-- Only conflicts present in deterministic findings or directly visible
+The structured output must contain:
+
+- confirmed_facts
+  Only facts directly supported by supplied evidence.
+
+- conflicts
+  Only conflicts present in deterministic findings or directly visible
   in the supplied evidence.
 
-MISSING EVIDENCE
-- Only evidence explicitly identified as missing or unavailable.
+- missing_evidence
+  Only evidence explicitly identified as missing or unavailable.
 
-BUSINESS OUTCOME
-- Use the deterministic outcome_confirmation.
-- If Spanner is unavailable, report UNCONFIRMED.
+- business_outcome
+  Use the deterministic outcome_confirmation.
+  If Spanner is unavailable, report UNCONFIRMED.
 
-POSSIBLE EXPLANATIONS
-- Clearly label every item as a hypothesis.
-- Do not state hypotheses as confirmed causes.
-- If the cause cannot be determined, explicitly say so.
+- possible_explanations
+  Clearly label every item as a hypothesis.
+  Do not state hypotheses as confirmed causes.
+  If the cause cannot be determined, explicitly say so.
 
-RECOMMENDED NEXT CHECKS
-- Checks that would resolve the identified conflict, hypothesis, or
+- recommended_next_checks
+  Checks that would resolve the identified conflict, hypothesis, or
   missing evidence.
 
-UNCERTAINTY
-- State what remains unknown and why.
+- uncertainty
+  State what remains unknown and why.
 
-EVIDENCE REFERENCES
-- Identify which supplied evidence supports each major finding.
-- Do not create evidence references that are not present in the JSON.
+- evidence_references
+  Identify which supplied evidence supports each major finding.
+  Do not create evidence references that are not present in the JSON.
 """
 
 
@@ -125,10 +198,11 @@ patchamomma_investigator = Agent(
     name="patchamomma_investigator",
     description=(
         "Investigates distributed AI-agent incidents using "
-        "validated evidence supplied by the Patchamomma workflow."
+        "validated evidence supplied by the I-ESPÍA workflow."
     ),
     model="gemini-3.6-flash",
     instruction=INVESTIGATOR_INSTRUCTION,
     tools=[],
     mode="task",
+    output_schema=InvestigationOutput,
 )
