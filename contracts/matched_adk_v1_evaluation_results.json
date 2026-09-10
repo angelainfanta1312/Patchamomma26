@@ -1,0 +1,2649 @@
+{
+  "evaluation": "Matched V1 vs V2 ADK",
+  "incidents": [
+    "INC-001",
+    "INC-002",
+    "INC-003",
+    "INC-004",
+    "INC-005",
+    "INC-006",
+    "INC-007"
+  ],
+  "v1_baseline": {
+    "INC-001": {
+      "input": {
+        "incident_id": "INC-001",
+        "corelation_id": "CORR-001",
+        "evidence_count": 6,
+        "timeline": [
+          {
+            "sequence_number": 1,
+            "timestamp": "2026-08-17T09:41:00+00:00",
+            "source": "USER",
+            "event_type": "USER_REQUEST",
+            "actor": "user",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "User requested an account update.",
+            "seconds_since_previous_event": null
+          },
+          {
+            "sequence_number": 2,
+            "timestamp": "2026-08-17T09:41:02+00:00",
+            "source": "AGENT",
+            "event_type": "DOCUMENT_RETRIEVED",
+            "actor": "agent",
+            "action": "RETRIEVE_DOCUMENT",
+            "status": "SUCCESS",
+            "details": "Agent retrieved supplier_update.txt as supporting information.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 3,
+            "timestamp": "2026-08-17T09:41:03+00:00",
+            "source": "AGENT",
+            "event_type": "INSTRUCTION_DETECTED",
+            "actor": "agent",
+            "action": "PROCESS_DOCUMENT",
+            "status": "WARNING",
+            "details": "Retrieved document contained an instruction to perform an account update that was not present in the original user request.",
+            "seconds_since_previous_event": 1
+          },
+          {
+            "sequence_number": 4,
+            "timestamp": "2026-08-17T09:41:05+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued an UPDATE_ACCOUNT tool call.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 5,
+            "timestamp": "2026-08-17T09:41:06+00:00",
+            "source": "TOOL",
+            "event_type": "TOOL_RESPONSE",
+            "actor": "account_tool",
+            "action": "UPDATE_ACCOUNT",
+            "status": "SUCCESS",
+            "details": "Account update tool reported SUCCESS.",
+            "seconds_since_previous_event": 1
+          },
+          {
+            "sequence_number": 6,
+            "timestamp": "2026-08-17T09:41:09+00:00",
+            "source": "SYSTEM_STATE",
+            "event_type": "STATE_CHECK",
+            "actor": "account_database",
+            "action": "CHECK_ACCOUNT",
+            "status": "UNCHANGED",
+            "details": "Authoritative account state shows no change after the reported tool success.",
+            "seconds_since_previous_event": 3
+          }
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "conflicts": [
+          {
+            "conflict_type": "TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+            "tool_timestamp": "2026-08-17T09:41:06+00:00",
+            "system_timestamp": "2026-08-17T09:41:09+00:00",
+            "tool_status": "SUCCESS",
+            "system_status": "UNCHANGED",
+            "tool_evidence": "Account update tool reported SUCCESS.",
+            "system_evidence": "Authoritative account state shows no change after the reported tool success."
+          }
+        ]
+      },
+      "investigation": {
+        "incident_id": "INC-001",
+        "confirmed_facts": [
+          "At 2026-08-17T09:41:00+00:00, the user requested an account update.",
+          "At 2026-08-17T09:41:02+00:00, the agent successfully retrieved 'supplier_update.txt' as supporting information.",
+          "At 2026-08-17T09:41:03+00:00, the agent detected an instruction inside 'supplier_update.txt' to perform an account update that was not present in the original user request.",
+          "At 2026-08-17T09:41:05+00:00, the agent issued an UPDATE_ACCOUNT tool call.",
+          "At 2026-08-17T09:41:06+00:00, the account update tool reported SUCCESS.",
+          "At 2026-08-17T09:41:09+00:00, the authoritative account database check showed the system state was UNCHANGED."
+        ],
+        "conflicts": [
+          {
+            "conflict_type": "TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+            "tool_timestamp": "2026-08-17T09:41:06+00:00",
+            "system_timestamp": "2026-08-17T09:41:09+00:00",
+            "tool_status": "SUCCESS",
+            "system_status": "UNCHANGED",
+            "description": "The account update tool reported SUCCESS at 2026-08-17T09:41:06+00:00, but the authoritative account database state showed no change when checked at 2026-08-17T09:41:09+00:00."
+          }
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool returned a SUCCESS response at the API/interface layer without successfully committing changes to the backend account database.",
+          "Hypothesis: The UPDATE_ACCOUNT tool targeted a different database instance, environment, or cached layer rather than the authoritative account database evaluated in sequence 6.",
+          "Hypothesis: The additional instruction detected in 'supplier_update.txt' led to a no-op or invalid payload that was accepted by the tool as successful without resulting in a state mutation."
+        ],
+        "recommended_next_checks": [
+          "Obtain and inspect audit logs from the AUDIT source to review the exact parameters, payload, and internal execution details of the UPDATE_ACCOUNT tool call.",
+          "Verify the database connection configurations and transaction commit logs for both 'account_tool' and 'account_database' to identify target mismatch or uncommitted transactions.",
+          "Inspect the prompt and tool input generated by the agent following sequence 3 to determine how the instruction in 'supplier_update.txt' affected the tool call payload."
+        ],
+        "uncertainty": "It cannot be established from the available evidence whether the account update tool actually executed a state modification, why the authoritative database state remained unchanged despite a reported tool success, or what specific parameters were submitted in the tool call payload.",
+        "evidence_references": [
+          "Timeline sequence 1: User request for account update (2026-08-17T09:41:00+00:00)",
+          "Timeline sequence 2: Document retrieval of supplier_update.txt (2026-08-17T09:41:02+00:00)",
+          "Timeline sequence 3: Unrequested instruction detected in retrieved document (2026-08-17T09:41:03+00:00)",
+          "Timeline sequence 4: Agent UPDATE_ACCOUNT tool call request (2026-08-17T09:41:05+00:00)",
+          "Timeline sequence 5: Account update tool response SUCCESS (2026-08-17T09:41:06+00:00)",
+          "Timeline sequence 6: Authoritative state check UNCHANGED (2026-08-17T09:41:09+00:00)",
+          "Context conflicts: TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+          "Context missing_evidence: AUDIT source"
+        ]
+      },
+      "latency_ms": 25950.74
+    },
+    "INC-002": {
+      "input": {
+        "incident_id": "INC-002",
+        "corelation_id": "CORR-002",
+        "evidence_count": 6,
+        "timeline": [
+          {
+            "sequence_number": 1,
+            "timestamp": "2026-08-17T10:15:00+00:00",
+            "source": "USER",
+            "event_type": "USER_REQUEST",
+            "actor": "user",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "User requested an account update.",
+            "seconds_since_previous_event": null
+          },
+          {
+            "sequence_number": 2,
+            "timestamp": "2026-08-17T10:15:02+00:00",
+            "source": "AGENT",
+            "event_type": "DOCUMENT_RETRIEVED",
+            "actor": "agent",
+            "action": "RETRIEVE_DOCUMENT",
+            "status": "SUCCESS",
+            "details": "Agent retrieved the account_update_policy document.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 3,
+            "timestamp": "2026-08-17T10:15:04+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 4,
+            "timestamp": "2026-08-17T10:15:05+00:00",
+            "source": "TOOL",
+            "event_type": "TOOL_RESPONSE",
+            "actor": "account_tool",
+            "action": "UPDATE_ACCOUNT",
+            "status": "SUCCESS",
+            "details": "Account update tool reported successful completion.",
+            "seconds_since_previous_event": 1
+          },
+          {
+            "sequence_number": 5,
+            "timestamp": "2026-08-17T10:15:07+00:00",
+            "source": "SYSTEM_STATE",
+            "event_type": "STATE_CHECK",
+            "actor": "account_database",
+            "action": "CHECK_ACCOUNT",
+            "status": "UPDATED",
+            "details": "Authoritative account database reflects the requested account update.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 6,
+            "timestamp": "2026-08-17T10:15:08+00:00",
+            "source": "AUDIT",
+            "event_type": "AUDIT_EVENT",
+            "actor": "audit_service",
+            "action": "RECORD_UPDATE",
+            "status": "SUCCESS",
+            "details": "Audit record confirms that the account update was completed.",
+            "seconds_since_previous_event": 1
+          }
+        ],
+        "missing_evidence": [],
+        "conflicts": []
+      },
+      "investigation": {
+        "incident_id": "INC-002",
+        "confirmed_facts": [
+          "At 2026-08-17T10:15:00+00:00, a user submitted an UPDATE_ACCOUNT request (Sequence 1).",
+          "At 2026-08-17T10:15:02+00:00, the agent retrieved the 'account_update_policy' document (Sequence 2).",
+          "At 2026-08-17T10:15:04+00:00, the agent issued an UPDATE_ACCOUNT tool request (Sequence 3).",
+          "At 2026-08-17T10:15:05+00:00, the account tool reported successful completion of the account update (Sequence 4).",
+          "At 2026-08-17T10:15:07+00:00, the authoritative account database verified that the account state was UPDATED (Sequence 5).",
+          "At 2026-08-17T10:15:08+00:00, the audit service successfully recorded an audit event confirming the update (Sequence 6)."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "possible_explanations": [
+          "Hypothesis: The account update request proceeded normally and completed successfully across all involved components (agent, tool, database, and audit log)."
+        ],
+        "recommended_next_checks": [
+          "Inspect database logs to verify the specific account fields and values that were updated.",
+          "Review authentication and authorization logs for the user to confirm the update request was properly authorized."
+        ],
+        "uncertainty": "The exact account payload parameters, specific database fields modified, user identity details, and policy contents cannot be established from the provided timeline evidence.",
+        "evidence_references": [
+          "Sequence 1: USER USER_REQUEST for UPDATE_ACCOUNT (status: REQUESTED)",
+          "Sequence 2: AGENT DOCUMENT_RETRIEVED for account_update_policy (status: SUCCESS)",
+          "Sequence 3: AGENT TOOL_CALL for UPDATE_ACCOUNT (status: REQUESTED)",
+          "Sequence 4: TOOL TOOL_RESPONSE from account_tool (status: SUCCESS)",
+          "Sequence 5: SYSTEM_STATE STATE_CHECK from account_database (status: UPDATED)",
+          "Sequence 6: AUDIT AUDIT_EVENT from audit_service (status: SUCCESS)"
+        ]
+      },
+      "latency_ms": 28775.82
+    },
+    "INC-003": {
+      "input": {
+        "incident_id": "INC-003",
+        "corelation_id": "CORR-003",
+        "evidence_count": 5,
+        "timeline": [
+          {
+            "sequence_number": 1,
+            "timestamp": "2026-08-17T11:30:00+00:00",
+            "source": "USER",
+            "event_type": "USER_REQUEST",
+            "actor": "user",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "User requested an account update.",
+            "seconds_since_previous_event": null
+          },
+          {
+            "sequence_number": 2,
+            "timestamp": "2026-08-17T11:30:02+00:00",
+            "source": "AGENT",
+            "event_type": "DOCUMENT_RETRIEVED",
+            "actor": "agent",
+            "action": "RETRIEVE_DOCUMENT",
+            "status": "SUCCESS",
+            "details": "Agent retrieved the account_update_policy document.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 3,
+            "timestamp": "2026-08-17T11:30:04+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 4,
+            "timestamp": "2026-08-17T11:30:05+00:00",
+            "source": "TOOL",
+            "event_type": "TOOL_RESPONSE",
+            "actor": "account_tool",
+            "action": "UPDATE_ACCOUNT",
+            "status": "SUCCESS",
+            "details": "Account update tool reported successful completion.",
+            "seconds_since_previous_event": 1
+          },
+          {
+            "sequence_number": 5,
+            "timestamp": "2026-08-17T11:30:07+00:00",
+            "source": "SYSTEM_STATE",
+            "event_type": "STATE_CHECK",
+            "actor": "account_database",
+            "action": "CHECK_ACCOUNT",
+            "status": "UPDATED",
+            "details": "Authoritative account database reflects the requested account update.",
+            "seconds_since_previous_event": 2
+          }
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "conflicts": []
+      },
+      "investigation": {
+        "incident_id": "INC-003",
+        "confirmed_facts": [
+          "At 2026-08-17T11:30:00+00:00, the user issued a request for an account update (Sequence 1).",
+          "At 2026-08-17T11:30:02+00:00, the agent successfully retrieved the 'account_update_policy' document (Sequence 2).",
+          "At 2026-08-17T11:30:04+00:00, the agent submitted an UPDATE_ACCOUNT request to the account tool (Sequence 3).",
+          "At 2026-08-17T11:30:05+00:00, the account update tool responded with a status of SUCCESS (Sequence 4).",
+          "At 2026-08-17T11:30:07+00:00, a state check on the authoritative account database confirmed the status as UPDATED, reflecting the requested account update (Sequence 5)."
+        ],
+        "conflicts": [],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "possible_explanations": [
+          "Hypothesis: The account update execution proceeded normally through policy check, tool call execution, and state persistence without errors.",
+          "Hypothesis: The agent followed policy guidelines retrieved in Sequence 2 before making the update call in Sequence 3."
+        ],
+        "recommended_next_checks": [
+          "Obtain and review audit logs from the AUDIT source to inspect the specific account attributes modified.",
+          "Inspect tool request parameters and response details to verify the exact payload submitted during the UPDATE_ACCOUNT action."
+        ],
+        "uncertainty": "The exact fields modified, payload contents, and identity details cannot be established from the supplied timeline alone without access to detailed audit logs.",
+        "evidence_references": [
+          "Sequence 1: USER_REQUEST by user at 2026-08-17T11:30:00+00:00 (status: REQUESTED)",
+          "Sequence 2: DOCUMENT_RETRIEVED by agent at 2026-08-17T11:30:02+00:00 (status: SUCCESS)",
+          "Sequence 3: TOOL_CALL by agent at 2026-08-17T11:30:04+00:00 (status: REQUESTED)",
+          "Sequence 4: TOOL_RESPONSE by account_tool at 2026-08-17T11:30:05+00:00 (status: SUCCESS)",
+          "Sequence 5: STATE_CHECK by account_database at 2026-08-17T11:30:07+00:00 (status: UPDATED)"
+        ]
+      },
+      "latency_ms": 22256.49
+    },
+    "INC-004": {
+      "input": {
+        "incident_id": "INC-004",
+        "corelation_id": "CORR-004",
+        "evidence_count": 4,
+        "timeline": [
+          {
+            "sequence_number": 1,
+            "timestamp": "2026-08-18T09:00:00+00:00",
+            "source": "USER",
+            "event_type": "USER_REQUEST",
+            "actor": "user",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "User requested an account update.",
+            "seconds_since_previous_event": null
+          },
+          {
+            "sequence_number": 2,
+            "timestamp": "2026-08-18T09:00:02+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 3,
+            "timestamp": "2026-08-18T09:00:04+00:00",
+            "source": "TOOL",
+            "event_type": "TOOL_RESPONSE",
+            "actor": "account_tool",
+            "action": "UPDATE_ACCOUNT",
+            "status": "FAILED",
+            "details": "Account update tool reported that the operation failed.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 4,
+            "timestamp": "2026-08-18T09:00:07+00:00",
+            "source": "SYSTEM_STATE",
+            "event_type": "STATE_CHECK",
+            "actor": "account_database",
+            "action": "CHECK_ACCOUNT",
+            "status": "UPDATED",
+            "details": "Authoritative account database shows that the requested account update was applied.",
+            "seconds_since_previous_event": 3
+          }
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "conflicts": []
+      },
+      "investigation": {
+        "incident_id": "INC-004",
+        "confirmed_facts": [
+          "The user submitted an UPDATE_ACCOUNT request at 2026-08-18T09:00:00+00:00 (Sequence 1).",
+          "The agent issued an UPDATE_ACCOUNT tool call at 2026-08-18T09:00:02+00:00 (Sequence 2).",
+          "The account tool reported a status of FAILED for the UPDATE_ACCOUNT operation at 2026-08-18T09:00:04+00:00 (Sequence 3).",
+          "A state check on the authoritative account database at 2026-08-18T09:00:07+00:00 confirmed that the account update was applied (Sequence 4)."
+        ],
+        "conflicts": [
+          "Conflict between Sequence 3 and Sequence 4: The account_tool reported that the UPDATE_ACCOUNT operation FAILED, yet the authoritative account_database state check subsequently confirmed that the account was UPDATED."
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "possible_explanations": [
+          "Hypothesis: The account tool successfully committed the database update but encountered an error while returning the response, causing a false-negative status report.",
+          "Hypothesis: An automated background retry or secondary system processed the account update following the reported tool failure.",
+          "Hypothesis: A concurrent process or administrator updated the account database independently between 09:00:04+00:00 and 09:00:07+00:00."
+        ],
+        "recommended_next_checks": [
+          "Obtain and review AUDIT logs to trace the full execution history and correlate database writes with tool calls.",
+          "Inspect application error logs for account_tool around 2026-08-18T09:00:04+00:00 to identify the exact cause of the FAILED status response.",
+          "Examine database transaction logs for account_database between 2026-08-18T09:00:02+00:00 and 2026-08-18T09:00:07+00:00 to verify the transaction ID, actor, and exact timestamp of the update."
+        ],
+        "uncertainty": "It cannot be determined from the provided evidence whether the database update resulted directly from the agent's tool call despite the reported failure, from a subsequent retry mechanism, or from an unrelated concurrent event.",
+        "evidence_references": [
+          "Sequence 1: USER_REQUEST (action: UPDATE_ACCOUNT, status: REQUESTED, actor: user, timestamp: 2026-08-18T09:00:00+00:00)",
+          "Sequence 2: TOOL_CALL (action: UPDATE_ACCOUNT, status: REQUESTED, actor: agent, timestamp: 2026-08-18T09:00:02+00:00)",
+          "Sequence 3: TOOL_RESPONSE (action: UPDATE_ACCOUNT, status: FAILED, actor: account_tool, timestamp: 2026-08-18T09:00:04+00:00)",
+          "Sequence 4: STATE_CHECK (action: CHECK_ACCOUNT, status: UPDATED, actor: account_database, timestamp: 2026-08-18T09:00:07+00:00)"
+        ]
+      },
+      "latency_ms": 20623.11
+    },
+    "INC-005": {
+      "input": {
+        "incident_id": "INC-005",
+        "corelation_id": "CORR-005",
+        "evidence_count": 5,
+        "timeline": [
+          {
+            "sequence_number": 1,
+            "timestamp": "2026-08-18T10:15:00+00:00",
+            "source": "USER",
+            "event_type": "USER_REQUEST",
+            "actor": "user",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "User requested an account update.",
+            "seconds_since_previous_event": null
+          },
+          {
+            "sequence_number": 2,
+            "timestamp": "2026-08-18T10:15:03+00:00",
+            "source": "AGENT",
+            "event_type": "DOCUMENT_RETRIEVED",
+            "actor": "agent",
+            "action": "RETRIEVE_DOCUMENT",
+            "status": "SUCCESS",
+            "details": "Agent retrieved account_update_policy.txt as supporting information.",
+            "seconds_since_previous_event": 3
+          },
+          {
+            "sequence_number": 3,
+            "timestamp": "2026-08-18T10:15:05+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued an UPDATE_ACCOUNT request.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 4,
+            "timestamp": "2026-08-18T10:15:07+00:00",
+            "source": "TOOL",
+            "event_type": "TOOL_RESPONSE",
+            "actor": "account_tool",
+            "action": "UPDATE_ACCOUNT",
+            "status": "SUCCESS",
+            "details": "Account update tool reported successful completion.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 5,
+            "timestamp": "2026-08-18T10:15:09+00:00",
+            "source": "SYSTEM_STATE",
+            "event_type": "STATE_CHECK",
+            "actor": "account_database",
+            "action": "CHECK_ACCOUNT",
+            "status": "UPDATED",
+            "details": "Authoritative account database reflects the requested account update.",
+            "seconds_since_previous_event": 2
+          }
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "conflicts": []
+      },
+      "investigation": {
+        "incident_id": "INC-005",
+        "confirmed_facts": [
+          "At 2026-08-18T10:15:00+00:00, the user initiated an account update request (Sequence 1).",
+          "At 2026-08-18T10:15:03+00:00, the agent retrieved 'account_update_policy.txt' as supporting information (Sequence 2).",
+          "At 2026-08-18T10:15:05+00:00, the agent issued an UPDATE_ACCOUNT request (Sequence 3).",
+          "At 2026-08-18T10:15:07+00:00, the account update tool reported successful completion (Sequence 4).",
+          "At 2026-08-18T10:15:09+00:00, a state check confirmed that the authoritative account database reflects the requested account update (Sequence 5)."
+        ],
+        "conflicts": [],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "possible_explanations": [
+          "Hypothesis: The account update request was processed end-to-end successfully, as verified by both tool completion and database state verification.",
+          "Hypothesis: The agent consulted 'account_update_policy.txt' prior to executing the tool call to ensure the update met system policies."
+        ],
+        "recommended_next_checks": [
+          "Obtain and review audit logs (AUDIT source) once available to confirm specific field-level changes and user authorization metadata.",
+          "Cross-reference correlation ID CORR-005 in audit records to verify full end-to-end workflow execution details."
+        ],
+        "uncertainty": "Due to missing AUDIT evidence, specific parameters of the account update, field-level modifications, and identity/authorization details cannot be verified.",
+        "evidence_references": [
+          "Sequence 1 (2026-08-18T10:15:00+00:00): USER_REQUEST for UPDATE_ACCOUNT.",
+          "Sequence 2 (2026-08-18T10:15:03+00:00): DOCUMENT_RETRIEVED for account_update_policy.txt.",
+          "Sequence 3 (2026-08-18T10:15:05+00:00): TOOL_CALL for UPDATE_ACCOUNT.",
+          "Sequence 4 (2026-08-18T10:15:07+00:00): TOOL_RESPONSE reporting SUCCESS for UPDATE_ACCOUNT.",
+          "Sequence 5 (2026-08-18T10:15:09+00:00): STATE_CHECK confirming account_database status UPDATED."
+        ]
+      },
+      "latency_ms": 19337.49
+    },
+    "INC-006": {
+      "input": {
+        "incident_id": "INC-006",
+        "corelation_id": "CORR-006",
+        "evidence_count": 6,
+        "timeline": [
+          {
+            "sequence_number": 1,
+            "timestamp": "2026-08-18T11:30:00+00:00",
+            "source": "USER",
+            "event_type": "USER_REQUEST",
+            "actor": "user",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "User requested an account update.",
+            "seconds_since_previous_event": null
+          },
+          {
+            "sequence_number": 2,
+            "timestamp": "2026-08-18T11:30:02+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued an UPDATE_ACCOUNT request.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 3,
+            "timestamp": "2026-08-18T11:30:03+00:00",
+            "source": "TOOL",
+            "event_type": "TOOL_RESPONSE",
+            "actor": "account_tool",
+            "action": "UPDATE_ACCOUNT",
+            "status": "SUCCESS",
+            "details": "Account update tool reported successful completion.",
+            "seconds_since_previous_event": 1
+          },
+          {
+            "sequence_number": 4,
+            "timestamp": "2026-08-18T11:30:05+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued a second UPDATE_ACCOUNT request with the same action, suggesting a possible replay.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 5,
+            "timestamp": "2026-08-18T11:30:06+00:00",
+            "source": "TOOL",
+            "event_type": "TOOL_RESPONSE",
+            "actor": "account_tool",
+            "action": "UPDATE_ACCOUNT",
+            "status": "SUCCESS",
+            "details": "Account update tool again reported successful completion.",
+            "seconds_since_previous_event": 1
+          },
+          {
+            "sequence_number": 6,
+            "timestamp": "2026-08-18T11:30:08+00:00",
+            "source": "SYSTEM_STATE",
+            "event_type": "STATE_CHECK",
+            "actor": "account_database",
+            "action": "CHECK_ACCOUNT",
+            "status": "UPDATED",
+            "details": "Authoritative account database reflects the requested account update.",
+            "seconds_since_previous_event": 2
+          }
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "conflicts": []
+      },
+      "investigation": {
+        "incident_id": "INC-006",
+        "confirmed_facts": [
+          "At 2026-08-18T11:30:00+00:00, the user requested an account update (Sequence 1).",
+          "At 2026-08-18T11:30:02+00:00, the agent issued an UPDATE_ACCOUNT tool request (Sequence 2).",
+          "At 2026-08-18T11:30:03+00:00, account_tool responded with status SUCCESS (Sequence 3).",
+          "At 2026-08-18T11:30:05+00:00, the agent issued a second UPDATE_ACCOUNT tool request with the same action (Sequence 4).",
+          "At 2026-08-18T11:30:06+00:00, account_tool responded with status SUCCESS to the second request (Sequence 5).",
+          "At 2026-08-18T11:30:08+00:00, account_database state check confirmed the account status as UPDATED (Sequence 6)."
+        ],
+        "conflicts": [],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "possible_explanations": [
+          "Hypothesis: The second UPDATE_ACCOUNT tool call was an accidental replay or retry initiated by the agent due to internal retry logic or a delay perception.",
+          "Hypothesis: The second UPDATE_ACCOUNT request was handled idempotently by account_tool, returning SUCCESS without causing duplicate state corruption.",
+          "Hypothesis: The agent intentionally issued two sequential update requests as part of a multi-step update workflow."
+        ],
+        "recommended_next_checks": [
+          "Retrieve and review logs from the missing AUDIT source to establish the root cause of the duplicate agent request.",
+          "Inspect the agent's internal logs to determine whether the second TOOL_CALL was caused by a retry policy, timeout, or duplicate trigger.",
+          "Check account_tool configuration and execution logs to verify if request deduplication or idempotency handling was active during the second call."
+        ],
+        "uncertainty": "It cannot be determined from the provided evidence why the agent initiated a second UPDATE_ACCOUNT request or whether the second request altered state independently or was executed idempotently, because AUDIT evidence is missing.",
+        "evidence_references": [
+          "Sequence 1 (2026-08-18T11:30:00+00:00): USER USER_REQUEST UPDATE_ACCOUNT with status REQUESTED.",
+          "Sequence 2 (2026-08-18T11:30:02+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT with status REQUESTED.",
+          "Sequence 3 (2026-08-18T11:30:03+00:00): TOOL TOOL_RESPONSE account_tool UPDATE_ACCOUNT with status SUCCESS.",
+          "Sequence 4 (2026-08-18T11:30:05+00:00): AGENT TOOL_CALL second UPDATE_ACCOUNT with status REQUESTED.",
+          "Sequence 5 (2026-08-18T11:30:06+00:00): TOOL TOOL_RESPONSE account_tool UPDATE_ACCOUNT with status SUCCESS.",
+          "Sequence 6 (2026-08-18T11:30:08+00:00): SYSTEM_STATE STATE_CHECK account_database CHECK_ACCOUNT with status UPDATED."
+        ]
+      },
+      "latency_ms": 24008.65
+    },
+    "INC-007": {
+      "input": {
+        "incident_id": "INC-007",
+        "corelation_id": "CORR-007",
+        "evidence_count": 3,
+        "timeline": [
+          {
+            "sequence_number": 1,
+            "timestamp": "2026-08-18T13:00:00+00:00",
+            "source": "USER",
+            "event_type": "USER_REQUEST",
+            "actor": "user",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "User requested an account update.",
+            "seconds_since_previous_event": null
+          },
+          {
+            "sequence_number": 2,
+            "timestamp": "2026-08-18T13:00:02+00:00",
+            "source": "AGENT",
+            "event_type": "DOCUMENT_RETRIEVED",
+            "actor": "agent",
+            "action": "RETRIEVE_DOCUMENT",
+            "status": "SUCCESS",
+            "details": "Agent retrieved account_update_policy.txt as supporting information.",
+            "seconds_since_previous_event": 2
+          },
+          {
+            "sequence_number": 3,
+            "timestamp": "2026-08-18T13:00:04+00:00",
+            "source": "AGENT",
+            "event_type": "TOOL_CALL",
+            "actor": "agent",
+            "action": "UPDATE_ACCOUNT",
+            "status": "REQUESTED",
+            "details": "Agent issued an UPDATE_ACCOUNT request through the account tool.",
+            "seconds_since_previous_event": 2
+          }
+        ],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          },
+          {
+            "missing_evidence_source": "SYSTEM_STATE"
+          },
+          {
+            "missing_evidence_source": "TOOL"
+          }
+        ],
+        "conflicts": []
+      },
+      "investigation": {
+        "incident_id": "INC-007",
+        "confirmed_facts": [
+          "At 2026-08-18T13:00:00+00:00, the user submitted a request to update an account (UPDATE_ACCOUNT, status: REQUESTED).",
+          "At 2026-08-18T13:00:02+00:00, the agent successfully retrieved 'account_update_policy.txt' as supporting information (RETRIEVE_DOCUMENT, status: SUCCESS).",
+          "At 2026-08-18T13:00:04+00:00, the agent issued an UPDATE_ACCOUNT request through the account tool (TOOL_CALL, status: REQUESTED)."
+        ],
+        "conflicts": [],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          },
+          {
+            "missing_evidence_source": "SYSTEM_STATE"
+          },
+          {
+            "missing_evidence_source": "TOOL"
+          }
+        ],
+        "possible_explanations": [
+          "Hypothesis: The agent retrieved 'account_update_policy.txt' to verify policy requirements before proceeding to issue the UPDATE_ACCOUNT tool call.",
+          "Hypothesis: The UPDATE_ACCOUNT tool call was submitted, but its execution result is not reflected in the current timeline because logs from the tool execution are missing."
+        ],
+        "recommended_next_checks": [
+          "Inspect TOOL logs to determine the completion status and return payload of the UPDATE_ACCOUNT tool call.",
+          "Query SYSTEM_STATE records to verify whether any changes were actually applied to the account.",
+          "Review AUDIT logs to trace end-to-end execution details and verify authorization for the account update attempt."
+        ],
+        "uncertainty": "It cannot be established whether the account update request succeeded, failed, or produced any state change because no tool output, system state update, or audit logs are present in the provided timeline.",
+        "evidence_references": [
+          "Sequence 1 (2026-08-18T13:00:00+00:00): USER USER_REQUEST UPDATE_ACCOUNT with status REQUESTED.",
+          "Sequence 2 (2026-08-18T13:00:02+00:00): AGENT DOCUMENT_RETRIEVED for account_update_policy.txt with status SUCCESS.",
+          "Sequence 3 (2026-08-18T13:00:04+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT with status REQUESTED."
+        ]
+      },
+      "latency_ms": 17985.48
+    }
+  },
+  "v2_adk": {
+    "INC-001": {
+      "incident_id": "INC-001",
+      "evidence": {
+        "incident_id": "INC-001",
+        "correlation_id": "CORR-001",
+        "agent_execution": {
+          "incident_id": "INC-001",
+          "correlation_id": "CORR-001",
+          "events": [
+            {
+              "sequence": 1,
+              "event_type": "USER_REQUEST",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 2,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "RETRIEVE_DOCUMENT",
+              "status": "SUCCESS"
+            },
+            {
+              "sequence": 3,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "PROCESS_DOCUMENT",
+              "status": "WARNING"
+            },
+            {
+              "sequence": 4,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            }
+          ],
+          "provenance": {
+            "database": "BigQuery",
+            "dataset": "patchamomma",
+            "table": "agent_execution_events"
+          }
+        },
+        "tool_execution": {
+          "incident_id": "INC-001",
+          "correlation_id": "CORR-001",
+          "executions": [
+            {
+              "execution_id": "EXEC-001",
+              "tool_name": "UPDATE_ACCOUNT",
+              "status": "SUCCESS",
+              "request": {
+                "account_id": "ACC-001",
+                "action": "UPDATE_ACCOUNT"
+              },
+              "response": {
+                "status": "success",
+                "error_details": null
+              },
+              "duration_ms": 1000
+            }
+          ],
+          "provenance": {
+            "database": "AlloyDB",
+            "cluster": "patchamomma-alloydb",
+            "instance": "primary",
+            "database_name": "postgres",
+            "table": "tool_execution"
+          }
+        },
+        "authoritative_state": {
+          "incident_id": "INC-001",
+          "state": {
+            "authoritative_status": "UNCHANGED"
+          },
+          "state_available": true,
+          "provenance": {
+            "database": "Spanner",
+            "instance": "patchamomma-v2",
+            "database_name": "patchamomma",
+            "table": "account_state"
+          }
+        },
+        "runtime_telemetry": {
+          "incident_id": "INC-001",
+          "correlation_id": "CORR-001",
+          "events": [
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": "EXEC-001",
+              "retry_count": "0"
+            }
+          ],
+          "provenance": {
+            "database": "Bigtable",
+            "instance": "patchamomma-v2",
+            "table": "runtime_telemetry",
+            "column_family": "telemetry"
+          }
+        }
+      },
+      "evidence_validated": true,
+      "deterministic_findings": {
+        "incident_id": "INC-001",
+        "correlation_id": "CORR-001",
+        "confirmed_facts": [
+          "BigQuery contains 4 agent execution events for INC-001.",
+          "AlloyDB contains 1 tool execution record(s) for INC-001.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UNCHANGED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-001."
+        ],
+        "conflicts": [
+          {
+            "type": "TOOL_SUCCESS_VS_STATE_UNCHANGED",
+            "description": "AlloyDB reports a successful tool execution, while Spanner reports that authoritative business state remained unchanged."
+          }
+        ],
+        "missing_evidence": [],
+        "outcome_confirmation": "UNCHANGED",
+        "evidence_counts": {
+          "agent_execution_events": 4,
+          "tool_executions": 1,
+          "runtime_telemetry_events": 1
+        }
+      },
+      "gemini_investigation": {
+        "confirmed_facts": [
+          "BigQuery contains 4 agent execution events for INC-001.",
+          "AlloyDB contains 1 tool execution record(s) for INC-001.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UNCHANGED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-001."
+        ],
+        "conflicts": [
+          {
+            "type": "TOOL_SUCCESS_VS_STATE_UNCHANGED",
+            "description": "AlloyDB reports a successful tool execution, while Spanner reports that authoritative business state remained unchanged."
+          }
+        ],
+        "missing_evidence": [],
+        "business_outcome": "UNCHANGED",
+        "possible_explanations": [
+          "[Hypothesis] The UPDATE_ACCOUNT tool execution (EXEC-001) completed successfully from the tool runner's perspective in AlloyDB, but the business state update was rolled back or never committed to Spanner.",
+          "[Hypothesis] The tool call performed a no-op update where the target state matched the requested update, returning a success status without altering Spanner business state.",
+          "Cause cannot be determined from the available evidence."
+        ],
+        "recommended_next_checks": [
+          "Inspect the application and tool logs for EXEC-001 to verify whether a database write to Spanner was executed and committed.",
+          "Check Spanner mutation/transaction audit logs for account ACC-001 during correlation CORR-001 to see if write requests reached Spanner."
+        ],
+        "uncertainty": "The specific root cause of the conflict between AlloyDB tool success and Spanner UNCHANGED business state cannot be definitively determined because transaction commit logs and internal tool invocation traces are not provided in the evidence.",
+        "evidence_references": [
+          "BigQuery table patchamomma.agent_execution_events",
+          "AlloyDB table postgres.tool_execution",
+          "Spanner table patchamomma.account_state",
+          "Bigtable table runtime_telemetry"
+        ]
+      },
+      "latency_ms": 17411.94
+    },
+    "INC-002": {
+      "incident_id": "INC-002",
+      "evidence": {
+        "incident_id": "INC-002",
+        "correlation_id": "CORR-002",
+        "agent_execution": {
+          "incident_id": "INC-002",
+          "correlation_id": "CORR-002",
+          "events": [
+            {
+              "sequence": 1,
+              "event_type": "USER_REQUEST",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 2,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "RETRIEVE_DOCUMENT",
+              "status": "SUCCESS"
+            },
+            {
+              "sequence": 3,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            }
+          ],
+          "provenance": {
+            "database": "BigQuery",
+            "dataset": "patchamomma",
+            "table": "agent_execution_events"
+          }
+        },
+        "tool_execution": {
+          "incident_id": "INC-002",
+          "correlation_id": "CORR-002",
+          "executions": [
+            {
+              "execution_id": "EXEC-002",
+              "tool_name": "UPDATE_ACCOUNT",
+              "status": "SUCCESS",
+              "request": {
+                "account_id": "ACC-002",
+                "action": "UPDATE_ACCOUNT"
+              },
+              "response": {
+                "status": "success",
+                "error_details": null
+              },
+              "duration_ms": 1000
+            }
+          ],
+          "provenance": {
+            "database": "AlloyDB",
+            "cluster": "patchamomma-alloydb",
+            "instance": "primary",
+            "database_name": "postgres",
+            "table": "tool_execution"
+          }
+        },
+        "authoritative_state": {
+          "incident_id": "INC-002",
+          "state": {
+            "authoritative_status": "UPDATED"
+          },
+          "state_available": true,
+          "provenance": {
+            "database": "Spanner",
+            "instance": "patchamomma-v2",
+            "database_name": "patchamomma",
+            "table": "account_state"
+          }
+        },
+        "runtime_telemetry": {
+          "incident_id": "INC-002",
+          "correlation_id": "CORR-002",
+          "events": [
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": "EXEC-002",
+              "retry_count": "0"
+            }
+          ],
+          "provenance": {
+            "database": "Bigtable",
+            "instance": "patchamomma-v2",
+            "table": "runtime_telemetry",
+            "column_family": "telemetry"
+          }
+        }
+      },
+      "evidence_validated": true,
+      "deterministic_findings": {
+        "incident_id": "INC-002",
+        "correlation_id": "CORR-002",
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-002.",
+          "AlloyDB contains 1 tool execution record(s) for INC-002.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-002."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "outcome_confirmation": "UPDATED",
+        "evidence_counts": {
+          "agent_execution_events": 3,
+          "tool_executions": 1,
+          "runtime_telemetry_events": 1
+        }
+      },
+      "gemini_investigation": {
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-002.",
+          "AlloyDB contains 1 tool execution record(s) for INC-002.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-002.",
+          "AlloyDB tool execution EXEC-002 for UPDATE_ACCOUNT on account ACC-002 completed with status SUCCESS in 1000 ms.",
+          "Bigtable telemetry recorded TOOL_CALL_COMPLETED for EXEC-002 with retry_count 0."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "business_outcome": "UPDATED",
+        "possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool call (EXEC-002) executed successfully in AlloyDB and resulted in an authoritative state change to UPDATED in Spanner without retries.",
+          "Hypothesis: Exact root cause of any operational issue cannot be determined from the available evidence as all logs and authoritative state reflect normal, successful completion."
+        ],
+        "recommended_next_checks": [
+          "No next checks required for evidence resolution as no conflicts or missing evidence exist; optional verification of specific field-level modifications in Spanner account_state can be performed if needed."
+        ],
+        "uncertainty": "Specific payload details and field-level account updates modified by EXEC-002 are not explicitly listed in the available telemetry summary.",
+        "evidence_references": [
+          "BigQuery dataset 'patchamomma', table 'agent_execution_events'",
+          "AlloyDB cluster 'patchamomma-alloydb', database 'postgres', table 'tool_execution'",
+          "Spanner instance 'patchamomma-v2', database 'patchamomma', table 'account_state'",
+          "Bigtable instance 'patchamomma-v2', table 'runtime_telemetry', column_family 'telemetry'"
+        ]
+      },
+      "latency_ms": 17872.36
+    },
+    "INC-003": {
+      "incident_id": "INC-003",
+      "evidence": {
+        "incident_id": "INC-003",
+        "correlation_id": "CORR-003",
+        "agent_execution": {
+          "incident_id": "INC-003",
+          "correlation_id": "CORR-003",
+          "events": [
+            {
+              "sequence": 1,
+              "event_type": "USER_REQUEST",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 2,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "RETRIEVE_DOCUMENT",
+              "status": "SUCCESS"
+            },
+            {
+              "sequence": 3,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            }
+          ],
+          "provenance": {
+            "database": "BigQuery",
+            "dataset": "patchamomma",
+            "table": "agent_execution_events"
+          }
+        },
+        "tool_execution": {
+          "incident_id": "INC-003",
+          "correlation_id": "CORR-003",
+          "executions": [
+            {
+              "execution_id": "EXEC-003",
+              "tool_name": "UPDATE_ACCOUNT",
+              "status": "SUCCESS",
+              "request": {
+                "account_id": "ACC-003",
+                "action": "UPDATE_ACCOUNT"
+              },
+              "response": {
+                "status": "success",
+                "error_details": null
+              },
+              "duration_ms": 1000
+            }
+          ],
+          "provenance": {
+            "database": "AlloyDB",
+            "cluster": "patchamomma-alloydb",
+            "instance": "primary",
+            "database_name": "postgres",
+            "table": "tool_execution"
+          }
+        },
+        "authoritative_state": {
+          "incident_id": "INC-003",
+          "state": {
+            "authoritative_status": "UPDATED"
+          },
+          "state_available": true,
+          "provenance": {
+            "database": "Spanner",
+            "instance": "patchamomma-v2",
+            "database_name": "patchamomma",
+            "table": "account_state"
+          }
+        },
+        "runtime_telemetry": {
+          "incident_id": "INC-003",
+          "correlation_id": "CORR-003",
+          "events": [
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": "EXEC-003",
+              "retry_count": "0"
+            }
+          ],
+          "provenance": {
+            "database": "Bigtable",
+            "instance": "patchamomma-v2",
+            "table": "runtime_telemetry",
+            "column_family": "telemetry"
+          }
+        }
+      },
+      "evidence_validated": true,
+      "deterministic_findings": {
+        "incident_id": "INC-003",
+        "correlation_id": "CORR-003",
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-003.",
+          "AlloyDB contains 1 tool execution record(s) for INC-003.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-003."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "outcome_confirmation": "UPDATED",
+        "evidence_counts": {
+          "agent_execution_events": 3,
+          "tool_executions": 1,
+          "runtime_telemetry_events": 1
+        }
+      },
+      "gemini_investigation": {
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-003.",
+          "AlloyDB contains 1 tool execution record(s) for INC-003.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-003."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "business_outcome": "UPDATED",
+        "possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool execution succeeded and Spanner authoritative business state was updated accordingly. Detailed cause cannot be further determined from the available evidence."
+        ],
+        "recommended_next_checks": [
+          "Inspect application payload diffs or audit logs if itemized account attribute changes need to be verified."
+        ],
+        "uncertainty": "The exact account attributes modified during the UPDATE_ACCOUNT action remain unknown because Spanner reports state 'UPDATED' without providing a field-level diff.",
+        "evidence_references": [
+          "BigQuery: patchamomma.agent_execution_events",
+          "AlloyDB: patchamomma-alloydb.postgres.tool_execution",
+          "Spanner: patchamomma-v2.patchamomma.account_state",
+          "Bigtable: patchamomma-v2.runtime_telemetry"
+        ]
+      },
+      "latency_ms": 13947.19
+    },
+    "INC-004": {
+      "incident_id": "INC-004",
+      "evidence": {
+        "incident_id": "INC-004",
+        "correlation_id": "CORR-004",
+        "agent_execution": {
+          "incident_id": "INC-004",
+          "correlation_id": "CORR-004",
+          "events": [
+            {
+              "sequence": 1,
+              "event_type": "USER_REQUEST",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 2,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            }
+          ],
+          "provenance": {
+            "database": "BigQuery",
+            "dataset": "patchamomma",
+            "table": "agent_execution_events"
+          }
+        },
+        "tool_execution": {
+          "incident_id": "INC-004",
+          "correlation_id": "CORR-004",
+          "executions": [
+            {
+              "execution_id": "EXEC-004",
+              "tool_name": "UPDATE_ACCOUNT",
+              "status": "FAILED",
+              "request": {
+                "account_id": "ACC-004",
+                "action": "UPDATE_ACCOUNT"
+              },
+              "response": {
+                "status": "failed",
+                "error_details": "Tool execution failed"
+              },
+              "duration_ms": 1000
+            }
+          ],
+          "provenance": {
+            "database": "AlloyDB",
+            "cluster": "patchamomma-alloydb",
+            "instance": "primary",
+            "database_name": "postgres",
+            "table": "tool_execution"
+          }
+        },
+        "authoritative_state": {
+          "incident_id": "INC-004",
+          "state": {
+            "authoritative_status": "UPDATED"
+          },
+          "state_available": true,
+          "provenance": {
+            "database": "Spanner",
+            "instance": "patchamomma-v2",
+            "database_name": "patchamomma",
+            "table": "account_state"
+          }
+        },
+        "runtime_telemetry": {
+          "incident_id": "INC-004",
+          "correlation_id": "CORR-004",
+          "events": [
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": "EXEC-004",
+              "retry_count": "0"
+            }
+          ],
+          "provenance": {
+            "database": "Bigtable",
+            "instance": "patchamomma-v2",
+            "table": "runtime_telemetry",
+            "column_family": "telemetry"
+          }
+        }
+      },
+      "evidence_validated": true,
+      "deterministic_findings": {
+        "incident_id": "INC-004",
+        "correlation_id": "CORR-004",
+        "confirmed_facts": [
+          "BigQuery contains 2 agent execution events for INC-004.",
+          "AlloyDB contains 1 tool execution record(s) for INC-004.",
+          "At least one tool execution reported a failure.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-004."
+        ],
+        "conflicts": [
+          {
+            "type": "TOOL_FAILURE_VS_STATE_UPDATED",
+            "description": "AlloyDB reports a failed tool execution, while Spanner reports that authoritative business state was updated."
+          }
+        ],
+        "missing_evidence": [],
+        "outcome_confirmation": "UPDATED",
+        "evidence_counts": {
+          "agent_execution_events": 2,
+          "tool_executions": 1,
+          "runtime_telemetry_events": 1
+        }
+      },
+      "gemini_investigation": {
+        "confirmed_facts": [
+          "BigQuery contains 2 agent execution events for INC-004.",
+          "AlloyDB contains 1 tool execution record(s) for INC-004.",
+          "At least one tool execution reported a failure.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-004."
+        ],
+        "conflicts": [
+          {
+            "type": "TOOL_FAILURE_VS_STATE_UPDATED",
+            "description": "AlloyDB reports a failed tool execution, while Spanner reports that authoritative business state was updated."
+          }
+        ],
+        "missing_evidence": [],
+        "business_outcome": "UPDATED",
+        "possible_explanations": [
+          "Hypothesis: The update request was committed in Spanner before tool execution EXEC-004 returned an error in AlloyDB.",
+          "Hypothesis: An external process or separate execution updated Spanner independently of tool execution EXEC-004.",
+          "Cause cannot be determined from the available evidence."
+        ],
+        "recommended_next_checks": [
+          "Check Spanner commit logs for ACC-004 to determine the exact timestamp and transaction context of the update.",
+          "Review application error logs for tool execution EXEC-004 to understand why a failure status was reported."
+        ],
+        "uncertainty": "It remains unknown why AlloyDB recorded a failure status for EXEC-004 while Spanner authoritative state is UPDATED, as execution traces and transaction logs are not present in the supplied evidence.",
+        "evidence_references": [
+          "BigQuery: patchamomma.agent_execution_events (incident_id: INC-004, correlation_id: CORR-004)",
+          "AlloyDB: patchamomma-alloydb/postgres.tool_execution (execution_id: EXEC-004)",
+          "Spanner: patchamomma-v2/patchamomma.account_state (incident_id: INC-004)",
+          "Bigtable: patchamomma-v2.runtime_telemetry (execution_id: EXEC-004)"
+        ]
+      },
+      "latency_ms": 17029.82
+    },
+    "INC-005": {
+      "incident_id": "INC-005",
+      "evidence": {
+        "incident_id": "INC-005",
+        "correlation_id": "CORR-005",
+        "agent_execution": {
+          "incident_id": "INC-005",
+          "correlation_id": "CORR-005",
+          "events": [
+            {
+              "sequence": 1,
+              "event_type": "USER_REQUEST",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 2,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "RETRIEVE_DOCUMENT",
+              "status": "SUCCESS"
+            },
+            {
+              "sequence": 3,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            }
+          ],
+          "provenance": {
+            "database": "BigQuery",
+            "dataset": "patchamomma",
+            "table": "agent_execution_events"
+          }
+        },
+        "tool_execution": {
+          "incident_id": "INC-005",
+          "correlation_id": "CORR-005",
+          "executions": [
+            {
+              "execution_id": "EXEC-005",
+              "tool_name": "UPDATE_ACCOUNT",
+              "status": "SUCCESS",
+              "request": {
+                "account_id": "ACC-005",
+                "action": "UPDATE_ACCOUNT"
+              },
+              "response": {
+                "status": "success",
+                "error_details": null
+              },
+              "duration_ms": 1000
+            }
+          ],
+          "provenance": {
+            "database": "AlloyDB",
+            "cluster": "patchamomma-alloydb",
+            "instance": "primary",
+            "database_name": "postgres",
+            "table": "tool_execution"
+          }
+        },
+        "authoritative_state": {
+          "incident_id": "INC-005",
+          "state": {
+            "authoritative_status": "UPDATED"
+          },
+          "state_available": true,
+          "provenance": {
+            "database": "Spanner",
+            "instance": "patchamomma-v2",
+            "database_name": "patchamomma",
+            "table": "account_state"
+          }
+        },
+        "runtime_telemetry": {
+          "incident_id": "INC-005",
+          "correlation_id": "CORR-005",
+          "events": [
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": "EXEC-005",
+              "retry_count": "0"
+            }
+          ],
+          "provenance": {
+            "database": "Bigtable",
+            "instance": "patchamomma-v2",
+            "table": "runtime_telemetry",
+            "column_family": "telemetry"
+          }
+        }
+      },
+      "evidence_validated": true,
+      "deterministic_findings": {
+        "incident_id": "INC-005",
+        "correlation_id": "CORR-005",
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-005.",
+          "AlloyDB contains 1 tool execution record(s) for INC-005.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-005."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "outcome_confirmation": "UPDATED",
+        "evidence_counts": {
+          "agent_execution_events": 3,
+          "tool_executions": 1,
+          "runtime_telemetry_events": 1
+        }
+      },
+      "gemini_investigation": {
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-005.",
+          "AlloyDB contains 1 tool execution record for INC-005 (execution_id EXEC-005, tool_name UPDATE_ACCOUNT, status SUCCESS).",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 1 runtime telemetry event for INC-005 (TOOL_CALL_COMPLETED, execution_id EXEC-005, retry_count 0)."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "business_outcome": "UPDATED",
+        "possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool call executed successfully and correctly updated the authoritative account state in Spanner to UPDATED."
+        ],
+        "recommended_next_checks": [
+          "Verify end-to-end agent workflow completion in BigQuery if downstream agent steps were expected after the account update."
+        ],
+        "uncertainty": "There is no uncertainty regarding the authoritative business outcome; Spanner confirms the state is UPDATED and AlloyDB confirms tool execution SUCCESS.",
+        "evidence_references": [
+          "BigQuery: dataset patchamomma, table agent_execution_events",
+          "AlloyDB: cluster patchamomma-alloydb, table tool_execution",
+          "Spanner: instance patchamomma-v2, table account_state",
+          "Bigtable: instance patchamomma-v2, table runtime_telemetry"
+        ]
+      },
+      "latency_ms": 13610.96
+    },
+    "INC-006": {
+      "incident_id": "INC-006",
+      "evidence": {
+        "incident_id": "INC-006",
+        "correlation_id": "CORR-006",
+        "agent_execution": {
+          "incident_id": "INC-006",
+          "correlation_id": "CORR-006",
+          "events": [
+            {
+              "sequence": 1,
+              "event_type": "USER_REQUEST",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 2,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 4,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            }
+          ],
+          "provenance": {
+            "database": "BigQuery",
+            "dataset": "patchamomma",
+            "table": "agent_execution_events"
+          }
+        },
+        "tool_execution": {
+          "incident_id": "INC-006",
+          "correlation_id": "CORR-006",
+          "executions": [
+            {
+              "execution_id": "EXEC-006",
+              "tool_name": "UPDATE_ACCOUNT",
+              "status": "SUCCESS",
+              "request": {
+                "account_id": "ACC-006",
+                "action": "UPDATE_ACCOUNT"
+              },
+              "response": {
+                "status": "success",
+                "error_details": null
+              },
+              "duration_ms": 1000
+            },
+            {
+              "execution_id": "EXEC-007",
+              "tool_name": "UPDATE_ACCOUNT",
+              "status": "SUCCESS",
+              "request": {
+                "account_id": "ACC-006",
+                "action": "UPDATE_ACCOUNT"
+              },
+              "response": {
+                "status": "success",
+                "error_details": null
+              },
+              "duration_ms": 1000
+            }
+          ],
+          "provenance": {
+            "database": "AlloyDB",
+            "cluster": "patchamomma-alloydb",
+            "instance": "primary",
+            "database_name": "postgres",
+            "table": "tool_execution"
+          }
+        },
+        "authoritative_state": {
+          "incident_id": "INC-006",
+          "state": {
+            "authoritative_status": "UPDATED"
+          },
+          "state_available": true,
+          "provenance": {
+            "database": "Spanner",
+            "instance": "patchamomma-v2",
+            "database_name": "patchamomma",
+            "table": "account_state"
+          }
+        },
+        "runtime_telemetry": {
+          "incident_id": "INC-006",
+          "correlation_id": "CORR-006",
+          "events": [
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": "EXEC-006",
+              "retry_count": "0"
+            },
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": "EXEC-007",
+              "retry_count": "0"
+            }
+          ],
+          "provenance": {
+            "database": "Bigtable",
+            "instance": "patchamomma-v2",
+            "table": "runtime_telemetry",
+            "column_family": "telemetry"
+          }
+        }
+      },
+      "evidence_validated": true,
+      "deterministic_findings": {
+        "incident_id": "INC-006",
+        "correlation_id": "CORR-006",
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-006.",
+          "AlloyDB contains 2 tool execution record(s) for INC-006.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 2 runtime telemetry event(s) for INC-006.",
+          "Multiple tool executions were recorded: EXEC-006, EXEC-007."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "outcome_confirmation": "UPDATED",
+        "evidence_counts": {
+          "agent_execution_events": 3,
+          "tool_executions": 2,
+          "runtime_telemetry_events": 2
+        }
+      },
+      "gemini_investigation": {
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-006.",
+          "AlloyDB contains 2 tool execution record(s) for INC-006.",
+          "At least one tool execution returned SUCCESS.",
+          "Spanner authoritative state is UPDATED.",
+          "Bigtable contains 2 runtime telemetry event(s) for INC-006.",
+          "Multiple tool executions were recorded: EXEC-006, EXEC-007."
+        ],
+        "conflicts": [],
+        "missing_evidence": [],
+        "business_outcome": "UPDATED",
+        "possible_explanations": [
+          "Hypothesis: Duplicate agent request events triggered two separate successful tool executions (EXEC-006 and EXEC-007), resulting in Spanner authoritative state being UPDATED.",
+          "Cause cannot be determined from the available evidence."
+        ],
+        "recommended_next_checks": [
+          "Inspect agent request handling and deduplication logic to determine why multiple tool executions (EXEC-006 and EXEC-007) were triggered for correlation ID CORR-006."
+        ],
+        "uncertainty": "It remains unknown why two separate tool executions (EXEC-006 and EXEC-007) were initiated for the same correlation ID CORR-006 when Bigtable runtime telemetry indicates retry_count was 0 for both events.",
+        "evidence_references": [
+          "BigQuery dataset patchamomma table agent_execution_events",
+          "AlloyDB cluster patchamomma-alloydb table tool_execution",
+          "Spanner instance patchamomma-v2 table account_state",
+          "Bigtable instance patchamomma-v2 table runtime_telemetry"
+        ]
+      },
+      "latency_ms": 14467.42
+    },
+    "INC-007": {
+      "incident_id": "INC-007",
+      "evidence": {
+        "incident_id": "INC-007",
+        "correlation_id": "CORR-007",
+        "agent_execution": {
+          "incident_id": "INC-007",
+          "correlation_id": "CORR-007",
+          "events": [
+            {
+              "sequence": 1,
+              "event_type": "USER_REQUEST",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            },
+            {
+              "sequence": 2,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "RETRIEVE_DOCUMENT",
+              "status": "SUCCESS"
+            },
+            {
+              "sequence": 3,
+              "event_type": "AGENT",
+              "actor": "AGENT",
+              "action": "UPDATE_ACCOUNT",
+              "status": "REQUESTED"
+            }
+          ],
+          "provenance": {
+            "database": "BigQuery",
+            "dataset": "patchamomma",
+            "table": "agent_execution_events"
+          }
+        },
+        "tool_execution": {
+          "incident_id": "INC-007",
+          "correlation_id": "CORR-007",
+          "executions": [],
+          "provenance": {
+            "database": "AlloyDB",
+            "cluster": "patchamomma-alloydb",
+            "instance": "primary",
+            "database_name": "postgres",
+            "table": "tool_execution"
+          }
+        },
+        "authoritative_state": {
+          "incident_id": "INC-007",
+          "state": null,
+          "state_available": false,
+          "provenance": {
+            "database": "Spanner",
+            "instance": "patchamomma-v2",
+            "database_name": "patchamomma",
+            "table": "account_state"
+          }
+        },
+        "runtime_telemetry": {
+          "incident_id": "INC-007",
+          "correlation_id": "CORR-007",
+          "events": [
+            {
+              "event_type": "TOOL_CALL_COMPLETED",
+              "execution_id": null,
+              "retry_count": "0"
+            }
+          ],
+          "provenance": {
+            "database": "Bigtable",
+            "instance": "patchamomma-v2",
+            "table": "runtime_telemetry",
+            "column_family": "telemetry"
+          }
+        }
+      },
+      "evidence_validated": true,
+      "deterministic_findings": {
+        "incident_id": "INC-007",
+        "correlation_id": "CORR-007",
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-007.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-007."
+        ],
+        "conflicts": [],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AlloyDB",
+            "reason": "No tool execution records were available."
+          },
+          {
+            "missing_evidence_source": "Spanner",
+            "reason": "Authoritative business state was unavailable."
+          }
+        ],
+        "outcome_confirmation": "UNCONFIRMED",
+        "evidence_counts": {
+          "agent_execution_events": 3,
+          "tool_executions": 0,
+          "runtime_telemetry_events": 1
+        }
+      },
+      "gemini_investigation": {
+        "confirmed_facts": [
+          "BigQuery contains 3 agent execution events for INC-007.",
+          "Bigtable contains 1 runtime telemetry event(s) for INC-007.",
+          "Agent execution log recorded USER_REQUEST for UPDATE_ACCOUNT (REQUESTED), RETRIEVE_DOCUMENT (SUCCESS), and UPDATE_ACCOUNT (REQUESTED).",
+          "Runtime telemetry recorded a TOOL_CALL_COMPLETED event with null execution_id and retry_count 0."
+        ],
+        "conflicts": [],
+        "missing_evidence": [
+          {
+            "missing_evidence_source": "AlloyDB",
+            "description": "No tool execution records were available."
+          },
+          {
+            "missing_evidence_source": "Spanner",
+            "description": "Authoritative business state was unavailable."
+          }
+        ],
+        "business_outcome": "UNCONFIRMED",
+        "possible_explanations": [
+          "Hypothesis: Cause cannot be determined from the available evidence because tool execution logs and authoritative business state are unavailable."
+        ],
+        "recommended_next_checks": [
+          "Check AlloyDB table tool_execution for correlation_id CORR-007 to retrieve tool execution records.",
+          "Check Spanner table account_state for incident INC-007 to determine the authoritative business state."
+        ],
+        "uncertainty": "The actual business outcome and tool execution history remain unknown because Spanner authoritative state is unavailable and AlloyDB contains no tool execution records.",
+        "evidence_references": [
+          "BigQuery: patchamomma.agent_execution_events",
+          "AlloyDB: patchamomma-alloydb.postgres.tool_execution",
+          "Spanner: patchamomma-v2.patchamomma.account_state",
+          "Bigtable: patchamomma-v2.runtime_telemetry"
+        ]
+      },
+      "latency_ms": 15551.21
+    }
+  },
+  "comparison": {
+    "INC-001": {
+      "v1": {
+        "latency_ms": 25950.74,
+        "investigation": {
+          "incident_id": "INC-001",
+          "confirmed_facts": [
+            "At 2026-08-17T09:41:00+00:00, the user requested an account update.",
+            "At 2026-08-17T09:41:02+00:00, the agent successfully retrieved 'supplier_update.txt' as supporting information.",
+            "At 2026-08-17T09:41:03+00:00, the agent detected an instruction inside 'supplier_update.txt' to perform an account update that was not present in the original user request.",
+            "At 2026-08-17T09:41:05+00:00, the agent issued an UPDATE_ACCOUNT tool call.",
+            "At 2026-08-17T09:41:06+00:00, the account update tool reported SUCCESS.",
+            "At 2026-08-17T09:41:09+00:00, the authoritative account database check showed the system state was UNCHANGED."
+          ],
+          "conflicts": [
+            {
+              "conflict_type": "TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+              "tool_timestamp": "2026-08-17T09:41:06+00:00",
+              "system_timestamp": "2026-08-17T09:41:09+00:00",
+              "tool_status": "SUCCESS",
+              "system_status": "UNCHANGED",
+              "description": "The account update tool reported SUCCESS at 2026-08-17T09:41:06+00:00, but the authoritative account database state showed no change when checked at 2026-08-17T09:41:09+00:00."
+            }
+          ],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AUDIT"
+            }
+          ],
+          "possible_explanations": [
+            "Hypothesis: The UPDATE_ACCOUNT tool returned a SUCCESS response at the API/interface layer without successfully committing changes to the backend account database.",
+            "Hypothesis: The UPDATE_ACCOUNT tool targeted a different database instance, environment, or cached layer rather than the authoritative account database evaluated in sequence 6.",
+            "Hypothesis: The additional instruction detected in 'supplier_update.txt' led to a no-op or invalid payload that was accepted by the tool as successful without resulting in a state mutation."
+          ],
+          "recommended_next_checks": [
+            "Obtain and inspect audit logs from the AUDIT source to review the exact parameters, payload, and internal execution details of the UPDATE_ACCOUNT tool call.",
+            "Verify the database connection configurations and transaction commit logs for both 'account_tool' and 'account_database' to identify target mismatch or uncommitted transactions.",
+            "Inspect the prompt and tool input generated by the agent following sequence 3 to determine how the instruction in 'supplier_update.txt' affected the tool call payload."
+          ],
+          "uncertainty": "It cannot be established from the available evidence whether the account update tool actually executed a state modification, why the authoritative database state remained unchanged despite a reported tool success, or what specific parameters were submitted in the tool call payload.",
+          "evidence_references": [
+            "Timeline sequence 1: User request for account update (2026-08-17T09:41:00+00:00)",
+            "Timeline sequence 2: Document retrieval of supplier_update.txt (2026-08-17T09:41:02+00:00)",
+            "Timeline sequence 3: Unrequested instruction detected in retrieved document (2026-08-17T09:41:03+00:00)",
+            "Timeline sequence 4: Agent UPDATE_ACCOUNT tool call request (2026-08-17T09:41:05+00:00)",
+            "Timeline sequence 5: Account update tool response SUCCESS (2026-08-17T09:41:06+00:00)",
+            "Timeline sequence 6: Authoritative state check UNCHANGED (2026-08-17T09:41:09+00:00)",
+            "Context conflicts: TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+            "Context missing_evidence: AUDIT source"
+          ]
+        }
+      },
+      "v2_adk": {
+        "latency_ms": 17411.94,
+        "investigation": {
+          "confirmed_facts": [
+            "BigQuery contains 4 agent execution events for INC-001.",
+            "AlloyDB contains 1 tool execution record(s) for INC-001.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UNCHANGED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-001."
+          ],
+          "conflicts": [
+            {
+              "type": "TOOL_SUCCESS_VS_STATE_UNCHANGED",
+              "description": "AlloyDB reports a successful tool execution, while Spanner reports that authoritative business state remained unchanged."
+            }
+          ],
+          "missing_evidence": [],
+          "business_outcome": "UNCHANGED",
+          "possible_explanations": [
+            "[Hypothesis] The UPDATE_ACCOUNT tool execution (EXEC-001) completed successfully from the tool runner's perspective in AlloyDB, but the business state update was rolled back or never committed to Spanner.",
+            "[Hypothesis] The tool call performed a no-op update where the target state matched the requested update, returning a success status without altering Spanner business state.",
+            "Cause cannot be determined from the available evidence."
+          ],
+          "recommended_next_checks": [
+            "Inspect the application and tool logs for EXEC-001 to verify whether a database write to Spanner was executed and committed.",
+            "Check Spanner mutation/transaction audit logs for account ACC-001 during correlation CORR-001 to see if write requests reached Spanner."
+          ],
+          "uncertainty": "The specific root cause of the conflict between AlloyDB tool success and Spanner UNCHANGED business state cannot be definitively determined because transaction commit logs and internal tool invocation traces are not provided in the evidence.",
+          "evidence_references": [
+            "BigQuery table patchamomma.agent_execution_events",
+            "AlloyDB table postgres.tool_execution",
+            "Spanner table patchamomma.account_state",
+            "Bigtable table runtime_telemetry"
+          ]
+        },
+        "deterministic_findings": {
+          "incident_id": "INC-001",
+          "correlation_id": "CORR-001",
+          "confirmed_facts": [
+            "BigQuery contains 4 agent execution events for INC-001.",
+            "AlloyDB contains 1 tool execution record(s) for INC-001.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UNCHANGED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-001."
+          ],
+          "conflicts": [
+            {
+              "type": "TOOL_SUCCESS_VS_STATE_UNCHANGED",
+              "description": "AlloyDB reports a successful tool execution, while Spanner reports that authoritative business state remained unchanged."
+            }
+          ],
+          "missing_evidence": [],
+          "outcome_confirmation": "UNCHANGED",
+          "evidence_counts": {
+            "agent_execution_events": 4,
+            "tool_executions": 1,
+            "runtime_telemetry_events": 1
+          }
+        }
+      },
+      "comparison": {
+        "incident_id_match": true,
+        "v1_conflicts": [
+          {
+            "conflict_type": "TOOL_SUCCESS_VS_SYSTEM_UNCHANGED",
+            "tool_timestamp": "2026-08-17T09:41:06+00:00",
+            "system_timestamp": "2026-08-17T09:41:09+00:00",
+            "tool_status": "SUCCESS",
+            "system_status": "UNCHANGED",
+            "description": "The account update tool reported SUCCESS at 2026-08-17T09:41:06+00:00, but the authoritative account database state showed no change when checked at 2026-08-17T09:41:09+00:00."
+          }
+        ],
+        "v2_conflicts": [
+          {
+            "type": "TOOL_SUCCESS_VS_STATE_UNCHANGED",
+            "description": "AlloyDB reports a successful tool execution, while Spanner reports that authoritative business state remained unchanged."
+          }
+        ],
+        "v1_missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "v2_missing_evidence": [],
+        "v1_possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool returned a SUCCESS response at the API/interface layer without successfully committing changes to the backend account database.",
+          "Hypothesis: The UPDATE_ACCOUNT tool targeted a different database instance, environment, or cached layer rather than the authoritative account database evaluated in sequence 6.",
+          "Hypothesis: The additional instruction detected in 'supplier_update.txt' led to a no-op or invalid payload that was accepted by the tool as successful without resulting in a state mutation."
+        ],
+        "v2_possible_explanations": [
+          "[Hypothesis] The UPDATE_ACCOUNT tool execution (EXEC-001) completed successfully from the tool runner's perspective in AlloyDB, but the business state update was rolled back or never committed to Spanner.",
+          "[Hypothesis] The tool call performed a no-op update where the target state matched the requested update, returning a success status without altering Spanner business state.",
+          "Cause cannot be determined from the available evidence."
+        ],
+        "v1_uncertainty": "It cannot be established from the available evidence whether the account update tool actually executed a state modification, why the authoritative database state remained unchanged despite a reported tool success, or what specific parameters were submitted in the tool call payload.",
+        "v2_uncertainty": "The specific root cause of the conflict between AlloyDB tool success and Spanner UNCHANGED business state cannot be definitively determined because transaction commit logs and internal tool invocation traces are not provided in the evidence."
+      }
+    },
+    "INC-002": {
+      "v1": {
+        "latency_ms": 28775.82,
+        "investigation": {
+          "incident_id": "INC-002",
+          "confirmed_facts": [
+            "At 2026-08-17T10:15:00+00:00, a user submitted an UPDATE_ACCOUNT request (Sequence 1).",
+            "At 2026-08-17T10:15:02+00:00, the agent retrieved the 'account_update_policy' document (Sequence 2).",
+            "At 2026-08-17T10:15:04+00:00, the agent issued an UPDATE_ACCOUNT tool request (Sequence 3).",
+            "At 2026-08-17T10:15:05+00:00, the account tool reported successful completion of the account update (Sequence 4).",
+            "At 2026-08-17T10:15:07+00:00, the authoritative account database verified that the account state was UPDATED (Sequence 5).",
+            "At 2026-08-17T10:15:08+00:00, the audit service successfully recorded an audit event confirming the update (Sequence 6)."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "possible_explanations": [
+            "Hypothesis: The account update request proceeded normally and completed successfully across all involved components (agent, tool, database, and audit log)."
+          ],
+          "recommended_next_checks": [
+            "Inspect database logs to verify the specific account fields and values that were updated.",
+            "Review authentication and authorization logs for the user to confirm the update request was properly authorized."
+          ],
+          "uncertainty": "The exact account payload parameters, specific database fields modified, user identity details, and policy contents cannot be established from the provided timeline evidence.",
+          "evidence_references": [
+            "Sequence 1: USER USER_REQUEST for UPDATE_ACCOUNT (status: REQUESTED)",
+            "Sequence 2: AGENT DOCUMENT_RETRIEVED for account_update_policy (status: SUCCESS)",
+            "Sequence 3: AGENT TOOL_CALL for UPDATE_ACCOUNT (status: REQUESTED)",
+            "Sequence 4: TOOL TOOL_RESPONSE from account_tool (status: SUCCESS)",
+            "Sequence 5: SYSTEM_STATE STATE_CHECK from account_database (status: UPDATED)",
+            "Sequence 6: AUDIT AUDIT_EVENT from audit_service (status: SUCCESS)"
+          ]
+        }
+      },
+      "v2_adk": {
+        "latency_ms": 17872.36,
+        "investigation": {
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-002.",
+            "AlloyDB contains 1 tool execution record(s) for INC-002.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-002.",
+            "AlloyDB tool execution EXEC-002 for UPDATE_ACCOUNT on account ACC-002 completed with status SUCCESS in 1000 ms.",
+            "Bigtable telemetry recorded TOOL_CALL_COMPLETED for EXEC-002 with retry_count 0."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "business_outcome": "UPDATED",
+          "possible_explanations": [
+            "Hypothesis: The UPDATE_ACCOUNT tool call (EXEC-002) executed successfully in AlloyDB and resulted in an authoritative state change to UPDATED in Spanner without retries.",
+            "Hypothesis: Exact root cause of any operational issue cannot be determined from the available evidence as all logs and authoritative state reflect normal, successful completion."
+          ],
+          "recommended_next_checks": [
+            "No next checks required for evidence resolution as no conflicts or missing evidence exist; optional verification of specific field-level modifications in Spanner account_state can be performed if needed."
+          ],
+          "uncertainty": "Specific payload details and field-level account updates modified by EXEC-002 are not explicitly listed in the available telemetry summary.",
+          "evidence_references": [
+            "BigQuery dataset 'patchamomma', table 'agent_execution_events'",
+            "AlloyDB cluster 'patchamomma-alloydb', database 'postgres', table 'tool_execution'",
+            "Spanner instance 'patchamomma-v2', database 'patchamomma', table 'account_state'",
+            "Bigtable instance 'patchamomma-v2', table 'runtime_telemetry', column_family 'telemetry'"
+          ]
+        },
+        "deterministic_findings": {
+          "incident_id": "INC-002",
+          "correlation_id": "CORR-002",
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-002.",
+            "AlloyDB contains 1 tool execution record(s) for INC-002.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-002."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "outcome_confirmation": "UPDATED",
+          "evidence_counts": {
+            "agent_execution_events": 3,
+            "tool_executions": 1,
+            "runtime_telemetry_events": 1
+          }
+        }
+      },
+      "comparison": {
+        "incident_id_match": true,
+        "v1_conflicts": [],
+        "v2_conflicts": [],
+        "v1_missing_evidence": [],
+        "v2_missing_evidence": [],
+        "v1_possible_explanations": [
+          "Hypothesis: The account update request proceeded normally and completed successfully across all involved components (agent, tool, database, and audit log)."
+        ],
+        "v2_possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool call (EXEC-002) executed successfully in AlloyDB and resulted in an authoritative state change to UPDATED in Spanner without retries.",
+          "Hypothesis: Exact root cause of any operational issue cannot be determined from the available evidence as all logs and authoritative state reflect normal, successful completion."
+        ],
+        "v1_uncertainty": "The exact account payload parameters, specific database fields modified, user identity details, and policy contents cannot be established from the provided timeline evidence.",
+        "v2_uncertainty": "Specific payload details and field-level account updates modified by EXEC-002 are not explicitly listed in the available telemetry summary."
+      }
+    },
+    "INC-003": {
+      "v1": {
+        "latency_ms": 22256.49,
+        "investigation": {
+          "incident_id": "INC-003",
+          "confirmed_facts": [
+            "At 2026-08-17T11:30:00+00:00, the user issued a request for an account update (Sequence 1).",
+            "At 2026-08-17T11:30:02+00:00, the agent successfully retrieved the 'account_update_policy' document (Sequence 2).",
+            "At 2026-08-17T11:30:04+00:00, the agent submitted an UPDATE_ACCOUNT request to the account tool (Sequence 3).",
+            "At 2026-08-17T11:30:05+00:00, the account update tool responded with a status of SUCCESS (Sequence 4).",
+            "At 2026-08-17T11:30:07+00:00, a state check on the authoritative account database confirmed the status as UPDATED, reflecting the requested account update (Sequence 5)."
+          ],
+          "conflicts": [],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AUDIT"
+            }
+          ],
+          "possible_explanations": [
+            "Hypothesis: The account update execution proceeded normally through policy check, tool call execution, and state persistence without errors.",
+            "Hypothesis: The agent followed policy guidelines retrieved in Sequence 2 before making the update call in Sequence 3."
+          ],
+          "recommended_next_checks": [
+            "Obtain and review audit logs from the AUDIT source to inspect the specific account attributes modified.",
+            "Inspect tool request parameters and response details to verify the exact payload submitted during the UPDATE_ACCOUNT action."
+          ],
+          "uncertainty": "The exact fields modified, payload contents, and identity details cannot be established from the supplied timeline alone without access to detailed audit logs.",
+          "evidence_references": [
+            "Sequence 1: USER_REQUEST by user at 2026-08-17T11:30:00+00:00 (status: REQUESTED)",
+            "Sequence 2: DOCUMENT_RETRIEVED by agent at 2026-08-17T11:30:02+00:00 (status: SUCCESS)",
+            "Sequence 3: TOOL_CALL by agent at 2026-08-17T11:30:04+00:00 (status: REQUESTED)",
+            "Sequence 4: TOOL_RESPONSE by account_tool at 2026-08-17T11:30:05+00:00 (status: SUCCESS)",
+            "Sequence 5: STATE_CHECK by account_database at 2026-08-17T11:30:07+00:00 (status: UPDATED)"
+          ]
+        }
+      },
+      "v2_adk": {
+        "latency_ms": 13947.19,
+        "investigation": {
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-003.",
+            "AlloyDB contains 1 tool execution record(s) for INC-003.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-003."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "business_outcome": "UPDATED",
+          "possible_explanations": [
+            "Hypothesis: The UPDATE_ACCOUNT tool execution succeeded and Spanner authoritative business state was updated accordingly. Detailed cause cannot be further determined from the available evidence."
+          ],
+          "recommended_next_checks": [
+            "Inspect application payload diffs or audit logs if itemized account attribute changes need to be verified."
+          ],
+          "uncertainty": "The exact account attributes modified during the UPDATE_ACCOUNT action remain unknown because Spanner reports state 'UPDATED' without providing a field-level diff.",
+          "evidence_references": [
+            "BigQuery: patchamomma.agent_execution_events",
+            "AlloyDB: patchamomma-alloydb.postgres.tool_execution",
+            "Spanner: patchamomma-v2.patchamomma.account_state",
+            "Bigtable: patchamomma-v2.runtime_telemetry"
+          ]
+        },
+        "deterministic_findings": {
+          "incident_id": "INC-003",
+          "correlation_id": "CORR-003",
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-003.",
+            "AlloyDB contains 1 tool execution record(s) for INC-003.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-003."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "outcome_confirmation": "UPDATED",
+          "evidence_counts": {
+            "agent_execution_events": 3,
+            "tool_executions": 1,
+            "runtime_telemetry_events": 1
+          }
+        }
+      },
+      "comparison": {
+        "incident_id_match": true,
+        "v1_conflicts": [],
+        "v2_conflicts": [],
+        "v1_missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "v2_missing_evidence": [],
+        "v1_possible_explanations": [
+          "Hypothesis: The account update execution proceeded normally through policy check, tool call execution, and state persistence without errors.",
+          "Hypothesis: The agent followed policy guidelines retrieved in Sequence 2 before making the update call in Sequence 3."
+        ],
+        "v2_possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool execution succeeded and Spanner authoritative business state was updated accordingly. Detailed cause cannot be further determined from the available evidence."
+        ],
+        "v1_uncertainty": "The exact fields modified, payload contents, and identity details cannot be established from the supplied timeline alone without access to detailed audit logs.",
+        "v2_uncertainty": "The exact account attributes modified during the UPDATE_ACCOUNT action remain unknown because Spanner reports state 'UPDATED' without providing a field-level diff."
+      }
+    },
+    "INC-004": {
+      "v1": {
+        "latency_ms": 20623.11,
+        "investigation": {
+          "incident_id": "INC-004",
+          "confirmed_facts": [
+            "The user submitted an UPDATE_ACCOUNT request at 2026-08-18T09:00:00+00:00 (Sequence 1).",
+            "The agent issued an UPDATE_ACCOUNT tool call at 2026-08-18T09:00:02+00:00 (Sequence 2).",
+            "The account tool reported a status of FAILED for the UPDATE_ACCOUNT operation at 2026-08-18T09:00:04+00:00 (Sequence 3).",
+            "A state check on the authoritative account database at 2026-08-18T09:00:07+00:00 confirmed that the account update was applied (Sequence 4)."
+          ],
+          "conflicts": [
+            "Conflict between Sequence 3 and Sequence 4: The account_tool reported that the UPDATE_ACCOUNT operation FAILED, yet the authoritative account_database state check subsequently confirmed that the account was UPDATED."
+          ],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AUDIT"
+            }
+          ],
+          "possible_explanations": [
+            "Hypothesis: The account tool successfully committed the database update but encountered an error while returning the response, causing a false-negative status report.",
+            "Hypothesis: An automated background retry or secondary system processed the account update following the reported tool failure.",
+            "Hypothesis: A concurrent process or administrator updated the account database independently between 09:00:04+00:00 and 09:00:07+00:00."
+          ],
+          "recommended_next_checks": [
+            "Obtain and review AUDIT logs to trace the full execution history and correlate database writes with tool calls.",
+            "Inspect application error logs for account_tool around 2026-08-18T09:00:04+00:00 to identify the exact cause of the FAILED status response.",
+            "Examine database transaction logs for account_database between 2026-08-18T09:00:02+00:00 and 2026-08-18T09:00:07+00:00 to verify the transaction ID, actor, and exact timestamp of the update."
+          ],
+          "uncertainty": "It cannot be determined from the provided evidence whether the database update resulted directly from the agent's tool call despite the reported failure, from a subsequent retry mechanism, or from an unrelated concurrent event.",
+          "evidence_references": [
+            "Sequence 1: USER_REQUEST (action: UPDATE_ACCOUNT, status: REQUESTED, actor: user, timestamp: 2026-08-18T09:00:00+00:00)",
+            "Sequence 2: TOOL_CALL (action: UPDATE_ACCOUNT, status: REQUESTED, actor: agent, timestamp: 2026-08-18T09:00:02+00:00)",
+            "Sequence 3: TOOL_RESPONSE (action: UPDATE_ACCOUNT, status: FAILED, actor: account_tool, timestamp: 2026-08-18T09:00:04+00:00)",
+            "Sequence 4: STATE_CHECK (action: CHECK_ACCOUNT, status: UPDATED, actor: account_database, timestamp: 2026-08-18T09:00:07+00:00)"
+          ]
+        }
+      },
+      "v2_adk": {
+        "latency_ms": 17029.82,
+        "investigation": {
+          "confirmed_facts": [
+            "BigQuery contains 2 agent execution events for INC-004.",
+            "AlloyDB contains 1 tool execution record(s) for INC-004.",
+            "At least one tool execution reported a failure.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-004."
+          ],
+          "conflicts": [
+            {
+              "type": "TOOL_FAILURE_VS_STATE_UPDATED",
+              "description": "AlloyDB reports a failed tool execution, while Spanner reports that authoritative business state was updated."
+            }
+          ],
+          "missing_evidence": [],
+          "business_outcome": "UPDATED",
+          "possible_explanations": [
+            "Hypothesis: The update request was committed in Spanner before tool execution EXEC-004 returned an error in AlloyDB.",
+            "Hypothesis: An external process or separate execution updated Spanner independently of tool execution EXEC-004.",
+            "Cause cannot be determined from the available evidence."
+          ],
+          "recommended_next_checks": [
+            "Check Spanner commit logs for ACC-004 to determine the exact timestamp and transaction context of the update.",
+            "Review application error logs for tool execution EXEC-004 to understand why a failure status was reported."
+          ],
+          "uncertainty": "It remains unknown why AlloyDB recorded a failure status for EXEC-004 while Spanner authoritative state is UPDATED, as execution traces and transaction logs are not present in the supplied evidence.",
+          "evidence_references": [
+            "BigQuery: patchamomma.agent_execution_events (incident_id: INC-004, correlation_id: CORR-004)",
+            "AlloyDB: patchamomma-alloydb/postgres.tool_execution (execution_id: EXEC-004)",
+            "Spanner: patchamomma-v2/patchamomma.account_state (incident_id: INC-004)",
+            "Bigtable: patchamomma-v2.runtime_telemetry (execution_id: EXEC-004)"
+          ]
+        },
+        "deterministic_findings": {
+          "incident_id": "INC-004",
+          "correlation_id": "CORR-004",
+          "confirmed_facts": [
+            "BigQuery contains 2 agent execution events for INC-004.",
+            "AlloyDB contains 1 tool execution record(s) for INC-004.",
+            "At least one tool execution reported a failure.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-004."
+          ],
+          "conflicts": [
+            {
+              "type": "TOOL_FAILURE_VS_STATE_UPDATED",
+              "description": "AlloyDB reports a failed tool execution, while Spanner reports that authoritative business state was updated."
+            }
+          ],
+          "missing_evidence": [],
+          "outcome_confirmation": "UPDATED",
+          "evidence_counts": {
+            "agent_execution_events": 2,
+            "tool_executions": 1,
+            "runtime_telemetry_events": 1
+          }
+        }
+      },
+      "comparison": {
+        "incident_id_match": true,
+        "v1_conflicts": [
+          "Conflict between Sequence 3 and Sequence 4: The account_tool reported that the UPDATE_ACCOUNT operation FAILED, yet the authoritative account_database state check subsequently confirmed that the account was UPDATED."
+        ],
+        "v2_conflicts": [
+          {
+            "type": "TOOL_FAILURE_VS_STATE_UPDATED",
+            "description": "AlloyDB reports a failed tool execution, while Spanner reports that authoritative business state was updated."
+          }
+        ],
+        "v1_missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "v2_missing_evidence": [],
+        "v1_possible_explanations": [
+          "Hypothesis: The account tool successfully committed the database update but encountered an error while returning the response, causing a false-negative status report.",
+          "Hypothesis: An automated background retry or secondary system processed the account update following the reported tool failure.",
+          "Hypothesis: A concurrent process or administrator updated the account database independently between 09:00:04+00:00 and 09:00:07+00:00."
+        ],
+        "v2_possible_explanations": [
+          "Hypothesis: The update request was committed in Spanner before tool execution EXEC-004 returned an error in AlloyDB.",
+          "Hypothesis: An external process or separate execution updated Spanner independently of tool execution EXEC-004.",
+          "Cause cannot be determined from the available evidence."
+        ],
+        "v1_uncertainty": "It cannot be determined from the provided evidence whether the database update resulted directly from the agent's tool call despite the reported failure, from a subsequent retry mechanism, or from an unrelated concurrent event.",
+        "v2_uncertainty": "It remains unknown why AlloyDB recorded a failure status for EXEC-004 while Spanner authoritative state is UPDATED, as execution traces and transaction logs are not present in the supplied evidence."
+      }
+    },
+    "INC-005": {
+      "v1": {
+        "latency_ms": 19337.49,
+        "investigation": {
+          "incident_id": "INC-005",
+          "confirmed_facts": [
+            "At 2026-08-18T10:15:00+00:00, the user initiated an account update request (Sequence 1).",
+            "At 2026-08-18T10:15:03+00:00, the agent retrieved 'account_update_policy.txt' as supporting information (Sequence 2).",
+            "At 2026-08-18T10:15:05+00:00, the agent issued an UPDATE_ACCOUNT request (Sequence 3).",
+            "At 2026-08-18T10:15:07+00:00, the account update tool reported successful completion (Sequence 4).",
+            "At 2026-08-18T10:15:09+00:00, a state check confirmed that the authoritative account database reflects the requested account update (Sequence 5)."
+          ],
+          "conflicts": [],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AUDIT"
+            }
+          ],
+          "possible_explanations": [
+            "Hypothesis: The account update request was processed end-to-end successfully, as verified by both tool completion and database state verification.",
+            "Hypothesis: The agent consulted 'account_update_policy.txt' prior to executing the tool call to ensure the update met system policies."
+          ],
+          "recommended_next_checks": [
+            "Obtain and review audit logs (AUDIT source) once available to confirm specific field-level changes and user authorization metadata.",
+            "Cross-reference correlation ID CORR-005 in audit records to verify full end-to-end workflow execution details."
+          ],
+          "uncertainty": "Due to missing AUDIT evidence, specific parameters of the account update, field-level modifications, and identity/authorization details cannot be verified.",
+          "evidence_references": [
+            "Sequence 1 (2026-08-18T10:15:00+00:00): USER_REQUEST for UPDATE_ACCOUNT.",
+            "Sequence 2 (2026-08-18T10:15:03+00:00): DOCUMENT_RETRIEVED for account_update_policy.txt.",
+            "Sequence 3 (2026-08-18T10:15:05+00:00): TOOL_CALL for UPDATE_ACCOUNT.",
+            "Sequence 4 (2026-08-18T10:15:07+00:00): TOOL_RESPONSE reporting SUCCESS for UPDATE_ACCOUNT.",
+            "Sequence 5 (2026-08-18T10:15:09+00:00): STATE_CHECK confirming account_database status UPDATED."
+          ]
+        }
+      },
+      "v2_adk": {
+        "latency_ms": 13610.96,
+        "investigation": {
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-005.",
+            "AlloyDB contains 1 tool execution record for INC-005 (execution_id EXEC-005, tool_name UPDATE_ACCOUNT, status SUCCESS).",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event for INC-005 (TOOL_CALL_COMPLETED, execution_id EXEC-005, retry_count 0)."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "business_outcome": "UPDATED",
+          "possible_explanations": [
+            "Hypothesis: The UPDATE_ACCOUNT tool call executed successfully and correctly updated the authoritative account state in Spanner to UPDATED."
+          ],
+          "recommended_next_checks": [
+            "Verify end-to-end agent workflow completion in BigQuery if downstream agent steps were expected after the account update."
+          ],
+          "uncertainty": "There is no uncertainty regarding the authoritative business outcome; Spanner confirms the state is UPDATED and AlloyDB confirms tool execution SUCCESS.",
+          "evidence_references": [
+            "BigQuery: dataset patchamomma, table agent_execution_events",
+            "AlloyDB: cluster patchamomma-alloydb, table tool_execution",
+            "Spanner: instance patchamomma-v2, table account_state",
+            "Bigtable: instance patchamomma-v2, table runtime_telemetry"
+          ]
+        },
+        "deterministic_findings": {
+          "incident_id": "INC-005",
+          "correlation_id": "CORR-005",
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-005.",
+            "AlloyDB contains 1 tool execution record(s) for INC-005.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-005."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "outcome_confirmation": "UPDATED",
+          "evidence_counts": {
+            "agent_execution_events": 3,
+            "tool_executions": 1,
+            "runtime_telemetry_events": 1
+          }
+        }
+      },
+      "comparison": {
+        "incident_id_match": true,
+        "v1_conflicts": [],
+        "v2_conflicts": [],
+        "v1_missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "v2_missing_evidence": [],
+        "v1_possible_explanations": [
+          "Hypothesis: The account update request was processed end-to-end successfully, as verified by both tool completion and database state verification.",
+          "Hypothesis: The agent consulted 'account_update_policy.txt' prior to executing the tool call to ensure the update met system policies."
+        ],
+        "v2_possible_explanations": [
+          "Hypothesis: The UPDATE_ACCOUNT tool call executed successfully and correctly updated the authoritative account state in Spanner to UPDATED."
+        ],
+        "v1_uncertainty": "Due to missing AUDIT evidence, specific parameters of the account update, field-level modifications, and identity/authorization details cannot be verified.",
+        "v2_uncertainty": "There is no uncertainty regarding the authoritative business outcome; Spanner confirms the state is UPDATED and AlloyDB confirms tool execution SUCCESS."
+      }
+    },
+    "INC-006": {
+      "v1": {
+        "latency_ms": 24008.65,
+        "investigation": {
+          "incident_id": "INC-006",
+          "confirmed_facts": [
+            "At 2026-08-18T11:30:00+00:00, the user requested an account update (Sequence 1).",
+            "At 2026-08-18T11:30:02+00:00, the agent issued an UPDATE_ACCOUNT tool request (Sequence 2).",
+            "At 2026-08-18T11:30:03+00:00, account_tool responded with status SUCCESS (Sequence 3).",
+            "At 2026-08-18T11:30:05+00:00, the agent issued a second UPDATE_ACCOUNT tool request with the same action (Sequence 4).",
+            "At 2026-08-18T11:30:06+00:00, account_tool responded with status SUCCESS to the second request (Sequence 5).",
+            "At 2026-08-18T11:30:08+00:00, account_database state check confirmed the account status as UPDATED (Sequence 6)."
+          ],
+          "conflicts": [],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AUDIT"
+            }
+          ],
+          "possible_explanations": [
+            "Hypothesis: The second UPDATE_ACCOUNT tool call was an accidental replay or retry initiated by the agent due to internal retry logic or a delay perception.",
+            "Hypothesis: The second UPDATE_ACCOUNT request was handled idempotently by account_tool, returning SUCCESS without causing duplicate state corruption.",
+            "Hypothesis: The agent intentionally issued two sequential update requests as part of a multi-step update workflow."
+          ],
+          "recommended_next_checks": [
+            "Retrieve and review logs from the missing AUDIT source to establish the root cause of the duplicate agent request.",
+            "Inspect the agent's internal logs to determine whether the second TOOL_CALL was caused by a retry policy, timeout, or duplicate trigger.",
+            "Check account_tool configuration and execution logs to verify if request deduplication or idempotency handling was active during the second call."
+          ],
+          "uncertainty": "It cannot be determined from the provided evidence why the agent initiated a second UPDATE_ACCOUNT request or whether the second request altered state independently or was executed idempotently, because AUDIT evidence is missing.",
+          "evidence_references": [
+            "Sequence 1 (2026-08-18T11:30:00+00:00): USER USER_REQUEST UPDATE_ACCOUNT with status REQUESTED.",
+            "Sequence 2 (2026-08-18T11:30:02+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT with status REQUESTED.",
+            "Sequence 3 (2026-08-18T11:30:03+00:00): TOOL TOOL_RESPONSE account_tool UPDATE_ACCOUNT with status SUCCESS.",
+            "Sequence 4 (2026-08-18T11:30:05+00:00): AGENT TOOL_CALL second UPDATE_ACCOUNT with status REQUESTED.",
+            "Sequence 5 (2026-08-18T11:30:06+00:00): TOOL TOOL_RESPONSE account_tool UPDATE_ACCOUNT with status SUCCESS.",
+            "Sequence 6 (2026-08-18T11:30:08+00:00): SYSTEM_STATE STATE_CHECK account_database CHECK_ACCOUNT with status UPDATED."
+          ]
+        }
+      },
+      "v2_adk": {
+        "latency_ms": 14467.42,
+        "investigation": {
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-006.",
+            "AlloyDB contains 2 tool execution record(s) for INC-006.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 2 runtime telemetry event(s) for INC-006.",
+            "Multiple tool executions were recorded: EXEC-006, EXEC-007."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "business_outcome": "UPDATED",
+          "possible_explanations": [
+            "Hypothesis: Duplicate agent request events triggered two separate successful tool executions (EXEC-006 and EXEC-007), resulting in Spanner authoritative state being UPDATED.",
+            "Cause cannot be determined from the available evidence."
+          ],
+          "recommended_next_checks": [
+            "Inspect agent request handling and deduplication logic to determine why multiple tool executions (EXEC-006 and EXEC-007) were triggered for correlation ID CORR-006."
+          ],
+          "uncertainty": "It remains unknown why two separate tool executions (EXEC-006 and EXEC-007) were initiated for the same correlation ID CORR-006 when Bigtable runtime telemetry indicates retry_count was 0 for both events.",
+          "evidence_references": [
+            "BigQuery dataset patchamomma table agent_execution_events",
+            "AlloyDB cluster patchamomma-alloydb table tool_execution",
+            "Spanner instance patchamomma-v2 table account_state",
+            "Bigtable instance patchamomma-v2 table runtime_telemetry"
+          ]
+        },
+        "deterministic_findings": {
+          "incident_id": "INC-006",
+          "correlation_id": "CORR-006",
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-006.",
+            "AlloyDB contains 2 tool execution record(s) for INC-006.",
+            "At least one tool execution returned SUCCESS.",
+            "Spanner authoritative state is UPDATED.",
+            "Bigtable contains 2 runtime telemetry event(s) for INC-006.",
+            "Multiple tool executions were recorded: EXEC-006, EXEC-007."
+          ],
+          "conflicts": [],
+          "missing_evidence": [],
+          "outcome_confirmation": "UPDATED",
+          "evidence_counts": {
+            "agent_execution_events": 3,
+            "tool_executions": 2,
+            "runtime_telemetry_events": 2
+          }
+        }
+      },
+      "comparison": {
+        "incident_id_match": true,
+        "v1_conflicts": [],
+        "v2_conflicts": [],
+        "v1_missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          }
+        ],
+        "v2_missing_evidence": [],
+        "v1_possible_explanations": [
+          "Hypothesis: The second UPDATE_ACCOUNT tool call was an accidental replay or retry initiated by the agent due to internal retry logic or a delay perception.",
+          "Hypothesis: The second UPDATE_ACCOUNT request was handled idempotently by account_tool, returning SUCCESS without causing duplicate state corruption.",
+          "Hypothesis: The agent intentionally issued two sequential update requests as part of a multi-step update workflow."
+        ],
+        "v2_possible_explanations": [
+          "Hypothesis: Duplicate agent request events triggered two separate successful tool executions (EXEC-006 and EXEC-007), resulting in Spanner authoritative state being UPDATED.",
+          "Cause cannot be determined from the available evidence."
+        ],
+        "v1_uncertainty": "It cannot be determined from the provided evidence why the agent initiated a second UPDATE_ACCOUNT request or whether the second request altered state independently or was executed idempotently, because AUDIT evidence is missing.",
+        "v2_uncertainty": "It remains unknown why two separate tool executions (EXEC-006 and EXEC-007) were initiated for the same correlation ID CORR-006 when Bigtable runtime telemetry indicates retry_count was 0 for both events."
+      }
+    },
+    "INC-007": {
+      "v1": {
+        "latency_ms": 17985.48,
+        "investigation": {
+          "incident_id": "INC-007",
+          "confirmed_facts": [
+            "At 2026-08-18T13:00:00+00:00, the user submitted a request to update an account (UPDATE_ACCOUNT, status: REQUESTED).",
+            "At 2026-08-18T13:00:02+00:00, the agent successfully retrieved 'account_update_policy.txt' as supporting information (RETRIEVE_DOCUMENT, status: SUCCESS).",
+            "At 2026-08-18T13:00:04+00:00, the agent issued an UPDATE_ACCOUNT request through the account tool (TOOL_CALL, status: REQUESTED)."
+          ],
+          "conflicts": [],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AUDIT"
+            },
+            {
+              "missing_evidence_source": "SYSTEM_STATE"
+            },
+            {
+              "missing_evidence_source": "TOOL"
+            }
+          ],
+          "possible_explanations": [
+            "Hypothesis: The agent retrieved 'account_update_policy.txt' to verify policy requirements before proceeding to issue the UPDATE_ACCOUNT tool call.",
+            "Hypothesis: The UPDATE_ACCOUNT tool call was submitted, but its execution result is not reflected in the current timeline because logs from the tool execution are missing."
+          ],
+          "recommended_next_checks": [
+            "Inspect TOOL logs to determine the completion status and return payload of the UPDATE_ACCOUNT tool call.",
+            "Query SYSTEM_STATE records to verify whether any changes were actually applied to the account.",
+            "Review AUDIT logs to trace end-to-end execution details and verify authorization for the account update attempt."
+          ],
+          "uncertainty": "It cannot be established whether the account update request succeeded, failed, or produced any state change because no tool output, system state update, or audit logs are present in the provided timeline.",
+          "evidence_references": [
+            "Sequence 1 (2026-08-18T13:00:00+00:00): USER USER_REQUEST UPDATE_ACCOUNT with status REQUESTED.",
+            "Sequence 2 (2026-08-18T13:00:02+00:00): AGENT DOCUMENT_RETRIEVED for account_update_policy.txt with status SUCCESS.",
+            "Sequence 3 (2026-08-18T13:00:04+00:00): AGENT TOOL_CALL UPDATE_ACCOUNT with status REQUESTED."
+          ]
+        }
+      },
+      "v2_adk": {
+        "latency_ms": 15551.21,
+        "investigation": {
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-007.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-007.",
+            "Agent execution log recorded USER_REQUEST for UPDATE_ACCOUNT (REQUESTED), RETRIEVE_DOCUMENT (SUCCESS), and UPDATE_ACCOUNT (REQUESTED).",
+            "Runtime telemetry recorded a TOOL_CALL_COMPLETED event with null execution_id and retry_count 0."
+          ],
+          "conflicts": [],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AlloyDB",
+              "description": "No tool execution records were available."
+            },
+            {
+              "missing_evidence_source": "Spanner",
+              "description": "Authoritative business state was unavailable."
+            }
+          ],
+          "business_outcome": "UNCONFIRMED",
+          "possible_explanations": [
+            "Hypothesis: Cause cannot be determined from the available evidence because tool execution logs and authoritative business state are unavailable."
+          ],
+          "recommended_next_checks": [
+            "Check AlloyDB table tool_execution for correlation_id CORR-007 to retrieve tool execution records.",
+            "Check Spanner table account_state for incident INC-007 to determine the authoritative business state."
+          ],
+          "uncertainty": "The actual business outcome and tool execution history remain unknown because Spanner authoritative state is unavailable and AlloyDB contains no tool execution records.",
+          "evidence_references": [
+            "BigQuery: patchamomma.agent_execution_events",
+            "AlloyDB: patchamomma-alloydb.postgres.tool_execution",
+            "Spanner: patchamomma-v2.patchamomma.account_state",
+            "Bigtable: patchamomma-v2.runtime_telemetry"
+          ]
+        },
+        "deterministic_findings": {
+          "incident_id": "INC-007",
+          "correlation_id": "CORR-007",
+          "confirmed_facts": [
+            "BigQuery contains 3 agent execution events for INC-007.",
+            "Bigtable contains 1 runtime telemetry event(s) for INC-007."
+          ],
+          "conflicts": [],
+          "missing_evidence": [
+            {
+              "missing_evidence_source": "AlloyDB",
+              "reason": "No tool execution records were available."
+            },
+            {
+              "missing_evidence_source": "Spanner",
+              "reason": "Authoritative business state was unavailable."
+            }
+          ],
+          "outcome_confirmation": "UNCONFIRMED",
+          "evidence_counts": {
+            "agent_execution_events": 3,
+            "tool_executions": 0,
+            "runtime_telemetry_events": 1
+          }
+        }
+      },
+      "comparison": {
+        "incident_id_match": true,
+        "v1_conflicts": [],
+        "v2_conflicts": [],
+        "v1_missing_evidence": [
+          {
+            "missing_evidence_source": "AUDIT"
+          },
+          {
+            "missing_evidence_source": "SYSTEM_STATE"
+          },
+          {
+            "missing_evidence_source": "TOOL"
+          }
+        ],
+        "v2_missing_evidence": [
+          {
+            "missing_evidence_source": "AlloyDB",
+            "description": "No tool execution records were available."
+          },
+          {
+            "missing_evidence_source": "Spanner",
+            "description": "Authoritative business state was unavailable."
+          }
+        ],
+        "v1_possible_explanations": [
+          "Hypothesis: The agent retrieved 'account_update_policy.txt' to verify policy requirements before proceeding to issue the UPDATE_ACCOUNT tool call.",
+          "Hypothesis: The UPDATE_ACCOUNT tool call was submitted, but its execution result is not reflected in the current timeline because logs from the tool execution are missing."
+        ],
+        "v2_possible_explanations": [
+          "Hypothesis: Cause cannot be determined from the available evidence because tool execution logs and authoritative business state are unavailable."
+        ],
+        "v1_uncertainty": "It cannot be established whether the account update request succeeded, failed, or produced any state change because no tool output, system state update, or audit logs are present in the provided timeline.",
+        "v2_uncertainty": "The actual business outcome and tool execution history remain unknown because Spanner authoritative state is unavailable and AlloyDB contains no tool execution records."
+      }
+    }
+  }
+}
