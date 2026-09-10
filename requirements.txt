@@ -1,0 +1,10 @@
+streamlit==1.63.0
+google-adk==2.8.0
+google-genai==2.21.0
+google-cloud-bigquery
+google-cloud-spanner
+google-cloud-bigtable
+google-cloud-alloydb-connector
+pydantic==2.13.5
+
+pg8000
