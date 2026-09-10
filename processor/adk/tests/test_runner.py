@@ -1,7 +1,7 @@
 import asyncio
 
 from processor.adk.runner import investigate_incident_async
-from processor.adk.test_workflow import (
+from processor.adk.tests.test_workflow import (
     FIXTURE_EVIDENCE,
     test_workflow,
 )

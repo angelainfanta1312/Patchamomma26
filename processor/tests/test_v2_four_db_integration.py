@@ -7,7 +7,7 @@ def check(condition, message):
         raise AssertionError(message)
 
 
-def test_incident(reader, incident_id, expected):
+def check_incident(reader, incident_id, expected):
     print(f"\n--- {incident_id} ---")
 
     evidence = reader.inspect_incident(incident_id)
@@ -395,7 +395,7 @@ def main():
 
     for incident_id, expected in test_cases.items():
         try:
-            test_incident(
+            check_incident(
                 reader,
                 incident_id,
                 expected,
