@@ -36,9 +36,16 @@ I-ESPÍA is designed to investigate exactly this kind of contradiction by recons
 
 ## 🎥 Project Walkthrough
 
-[![I-ESPÍA — AI-Agent Incident Investigator](https://img.youtube.com/vi/PmY6J1DWWBM/maxresdefault.jpg)](https://youtu.be/PmY6J1DWWBM)
+*Project walkthrough showing the I-ESPÍA evidence-first investigation workflow, including multi-source evidence reconstruction, contradiction detection, and handling of incomplete evidence.*
 
-**Watch the project walkthrough on YouTube →**
+**[Watch the project walkthrough on YouTube →](https://youtu.be/PmY6J1DWWBM)**
+
+<a href="https://youtu.be/PmY6J1DWWBM">
+  <img src="https://img.youtube.com/vi/PmY6J1DWWBM/maxresdefault.jpg"
+       alt="I-ESPÍA — AI-Agent Incident Investigator"
+       width="600">
+</a>
+
 ---
 
 # Table of Contents
@@ -619,7 +626,7 @@ This means uncertainty is treated as a legitimate investigation result rather th
 ---
 
 # Architecture
-![alt text](Architecture.png)
+![I-ESPÍA V2 evidence-first multi-database architecture](docs/images/Architecture.png)
 *Figure 1 — I-ESPÍA V2 evidence-first multi-database architecture.*
 ---
 
