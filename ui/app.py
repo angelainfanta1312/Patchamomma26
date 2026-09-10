@@ -413,7 +413,8 @@ st.markdown(
         }
 
         .section-title {
-            color: var(--ink);
+            /* Deliberately neutral ink that remains readable in both themes. */
+            color: #667085 !important;
             font-size: 1.18rem;
             font-weight: 720;
             margin-bottom: 0.75rem;
@@ -1102,8 +1103,6 @@ if incident is not None and investigation is not None:
             st.rerun()
 
     # Dynamic Single Active Detail Panel
-    st.markdown('<div class="detail-panel-box">', unsafe_allow_html=True)
-
     if active_tab == "conflicts":
         st.markdown("### Conflict detected")
         if conflicts:
@@ -1232,8 +1231,6 @@ if incident is not None and investigation is not None:
                 """,
                 unsafe_allow_html=True,
             )
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # -----------------------------------------------------------------------
     # 4. Execution Sequence (Collapsible timeline)
