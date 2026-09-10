@@ -725,7 +725,7 @@ st.markdown(
     """
     <div class="app-header">
         <div class="app-title">
-            <span class="product-name">I-ESPÍA</span><span class="title-dash">—</span> an AI incident investigator
+            <span class="product-name">I-ESPÍA<span class="title-dash">—</span> an AI incident investigator</span>
         </div>
         <div class="app-subtitle">
             Incident Evidence Sequence, Prediction &amp; Investigation Agent
