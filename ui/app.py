@@ -305,50 +305,32 @@ st.markdown(
 
         .block-container {
             max-width: 1280px;
-            padding-top: 2rem;
+            /* Keep the app content below Streamlit's top toolbar/deploy chrome. */
+            padding-top: 4.75rem;
             padding-bottom: 4rem;
         }
 
         .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 2rem;
+            margin-top: 0.15rem;
             margin-bottom: 1.2rem;
         }
 
-        .brand-mark {
-            display: flex;
-            align-items: center;
-            gap: 0.45rem;
-            width: fit-content;
-            height: 1.15rem;
-            line-height: 1.15rem;
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.13em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 0.55rem;
-            overflow: visible;
-        }
-
-        .brand-dot {
-            width: 7px;
-            height: 7px;
-            min-width: 7px;
-            border-radius: 50%;
-            background: var(--ink);
-            display: inline-block;
-        }
-
         .app-title {
-            font-size: 2.15rem;
-            line-height: 1.05;
+            font-size: 2.25rem;
+            line-height: 1.08;
             font-weight: 760;
             letter-spacing: -0.035em;
             color: var(--ink);
             margin-bottom: 0.45rem;
+        }
+
+        .app-title .product-name {
+            color: #1769d1;
+        }
+
+        .app-title .title-dash {
+            color: #1769d1;
+            margin-left: 0.05em;
         }
 
         .app-subtitle {
@@ -707,18 +689,13 @@ st.markdown(
 st.markdown(
     """
     <div class="app-header">
-        <div>
-            <div class="brand-mark">
-                <span class="brand-dot"></span>
-                I-ESPÍA
-            </div>
-            <div class="app-title">AI Incident Investigator</div>
-            <div class="app-subtitle">
-                Incident Evidence Sequence, Prediction &amp; Investigation Agent
-                · Evidence-grounded investigation for AI-agent operations
-            </div>
+        <div class="app-title">
+            <span class="product-name">I-ESPÍA</span><span class="title-dash">—</span> an AI incident investigator
         </div>
-        <div class="product-badge">Google Cloud · ADK · Gemini</div>
+        <div class="app-subtitle">
+            Incident Evidence Sequence, Prediction &amp; Investigation Agent
+            · Evidence-grounded investigation for AI-agent operations
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
